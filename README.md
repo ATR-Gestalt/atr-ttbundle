@@ -152,6 +152,14 @@ atr-ttbundle/
 - **`unicode` 缩进未验证**：`├─ └─` 是否被游戏字体正确渲染尚未确认，默认用 `ascii`（`|--`）。
 - **`[labels].weight` 暂不支持**：科技权重不在输出范围内。
 
+## 灵感来源与致谢
+
+- **代码主体**：fork 自 [Clazex/StlTechRelGen](https://github.com/Clazex/StlTechRelGen)（MIT），
+  保留原作者版权声明。
+- **科技树渲染样式**：参考 [codexvn/TechnologyTree](https://github.com/codexvn/stellaris-parser)
+  （Stellaris 工坊 MOD「TechnologyTree」配套解析器）的表现规则，未复制其代码。
+- **前置/解锁提示样式**：参考 Stellaris 工坊 MOD「Tech Relations」（工坊 id 3491493772）。
+
 ## 开发说明
 
 本工具在开发过程中使用了 **DeepSeek** 作为 AI 编程助手，辅助完成需求梳理、方案设计、

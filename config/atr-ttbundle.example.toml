@@ -62,7 +62,7 @@ enabled = true          # 整行开关；关掉后只剩正文段落
 area_icon = true        # £physics£ £society£ £engineering£
 area_name = true        # $PHYSICS$ $SOCIETY$ $ENGINEERING$
 tier = true             # T1 / T2 …
-tier_zero = "T0"        # tier = 0（起始科技）显示成什么；填空则不显示层级
+tier_zero = "T0"        # tier = 0（起始科技）显示成什么；填空则显示 T0
 category = true         # ($computing$) 形式
 rare = true             # $TECH_IS_RARE$
 dangerous = true        # $TECH_IS_DANGEROUS$

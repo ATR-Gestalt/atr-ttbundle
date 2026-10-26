@@ -82,7 +82,7 @@ internal sealed partial class Config {
 
 		public bool Tier { get; set; } = true;
 
-		/// <summary>tier = 0（起始科技）显示成什么；留空则不显示层级。</summary>
+		/// <summary>tier = 0（起始科技）显示成什么；留空则显示 T0。</summary>
 		public string TierZero { get; set; } = "T0";
 
 		public bool Category { get; set; } = true;
@@ -209,6 +209,21 @@ internal sealed partial class Config {
 		// [data]
 		if (string.IsNullOrWhiteSpace(Data.Mode)) {
 			Data.Mode = "vanilla";
+		}
+	}
+
+	/// <summary>生成前校验关键路径，缺失时给出可读提示而不是底层异常。</summary>
+	internal void Validate() {
+		if (string.IsNullOrWhiteSpace(Game.GamePath)) {
+			throw new InvalidOperationException(
+				"请先填写游戏安装目录（[game].game_path），再开始生成"
+			);
+		}
+
+		if (string.IsNullOrWhiteSpace(Game.DocumentPath)) {
+			throw new InvalidOperationException(
+				"请先填写群星用户数据目录（[game].document_path），再开始生成"
+			);
 		}
 	}
 

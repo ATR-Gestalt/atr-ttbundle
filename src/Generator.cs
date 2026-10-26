@@ -120,6 +120,8 @@ internal static class Generator {
 	) {
 		ArgumentNullException.ThrowIfNull(config);
 
+		config.Validate();
+
 		if (config.SuppressesCWToolsErrors) {
 			CWTools.Utilities.Utils.logError =
 				FuncConvert.FromAction((string _) => { });

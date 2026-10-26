@@ -70,6 +70,8 @@ public static class Program {
 	}
 
 	private static async Task Execute(Config config) {
+		config.Validate();
+
 		if (config.OverrideLanguage != null) {
 			LoadMessages(config.OverrideLanguage);
 		}

@@ -9,8 +9,8 @@ internal sealed partial class Config {
 	// 已不再执行更新检查（原先指向上游仓库，对本工具无意义）。
 	// 保留该类型仅为兼容旧版 atr-ttbundle.toml 里的 [update] 段。
 	public sealed class UpdateConfig {
-		/// <summary>兼容旧版 toml 的 check_update 键；工具已不执行更新检查。</summary>
-		public bool CheckUpdate { get; set; } = true;
+		/// <summary>兼容旧版 toml 的 check_update 键；工具已不执行更新检查，默认关闭。</summary>
+		public bool CheckUpdate { get; set; }
 	}
 
 	public sealed class GameConfig {
@@ -95,7 +95,8 @@ internal sealed partial class Config {
 
 		public bool Repeatable { get; set; } = true;
 
-		public bool Cost { get; set; }
+		/// <summary>研究成本数值（默认显示）。</summary>
+		public bool Cost { get; set; } = true;
 
 		public bool Color { get; set; } = true;
 

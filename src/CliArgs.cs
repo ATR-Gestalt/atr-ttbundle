@@ -59,7 +59,7 @@ internal sealed class CliArgs : Command<CliArgs.Settings> {
 				TargetDir = string.IsNullOrEmpty(Playset) ? TargetMod : "",
 			},
 			Update = new Config.UpdateConfig {
-				CheckUpdate = !NoCheckUpdate,
+				CheckUpdate = false,
 			},
 		};
 	}

@@ -67,7 +67,7 @@ category = true         # ($computing$) 形式
 rare = true             # $TECH_IS_RARE$
 dangerous = true        # $TECH_IS_DANGEROUS$
 repeatable = true       # 可重复科技标记
-cost = false            # 研究成本数值
+cost = true             # 研究成本数值（默认显示）
 color = true            # 整行用 §Y…§! 包裹
 delimiter = " "         # 各标签之间的分隔符，例如改成 " | "
 
@@ -86,7 +86,7 @@ show_area_icon = true          # 每个列表项前带领域图标
 [tree]
 enabled = true
 # down = 只画它能解锁什么；up = 只画前置链；both = 上下游都画
-direction = "down"
+direction = "both"
 title = "科技树:"
 # both 方向时，上下游拆成两段，各自的小标题
 up_title = "[前置]"
@@ -100,4 +100,4 @@ truncate_text = "…还有未显示的解锁项"
 # {tech} = ['technology:xxx'] 概念引用（名字自动跟随翻译）
 # {tier} = 层级数字；{icon} = 领域图标
 node_template = "{tech} (T{tier})"
-color_by_area = false          # 按领域给节点上色（物理蓝/社会绿/工程橙）
+color_by_area = true           # 按领域给节点上色（物理蓝/社会绿/工程橙）

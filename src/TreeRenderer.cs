@@ -11,7 +11,8 @@ internal sealed class TreeConfig {
 	public bool Enabled { get; set; } = true;
 
 	/// <summary>down = 只画下游；up = 只画前置链；both = 上下游都画。</summary>
-	public string Direction { get; set; } = "down";
+	/// <summary>down / up / both；默认 both（上下游各成一段，展示完整科技树）。</summary>
+	public string Direction { get; set; } = "both";
 
 	public string Title { get; set; } = "科技树:";
 
@@ -33,7 +34,8 @@ internal sealed class TreeConfig {
 	/// <summary>{tech} = 概念引用，{tier} = 层级数字，{icon} = 领域图标。</summary>
 	public string NodeTemplate { get; set; } = "{tech} (T{tier})";
 
-	public bool ColorByArea { get; set; }
+	/// <summary>按领域给节点上色（物理蓝/社会绿/工程橙）。</summary>
+	public bool ColorByArea { get; set; } = true;
 }
 
 /// <summary>

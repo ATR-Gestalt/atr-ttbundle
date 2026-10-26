@@ -270,7 +270,8 @@ internal sealed partial class Config {
 	}
 
 	internal void Save() {
-		using FileStream file = File.OpenWrite(Constants.ConfigPath);
+		// 用 Create 而不是 OpenWrite：OpenWrite 不截断旧文件，新内容更短时会残留旧尾巴
+		using FileStream file = new(Constants.ConfigPath, FileMode.Create, FileAccess.Write);
 		TomlSerializer.Serialize(file, this, TomlContext.Default.Options with {
 			StringStylePreferences = new() {
 				DefaultStyle = TomlStringStyle.Literal

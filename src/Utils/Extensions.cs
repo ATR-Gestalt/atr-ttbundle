@@ -68,12 +68,6 @@ internal static class Extensions {
 		public string Format<T1, T2, T3>(T1 arg1, T2 arg2, T3 arg3) =>
 			string.Format(CultureInfo.InvariantCulture, self, arg1, arg2, arg3);
 
-		public string FormatLocal<T>(T arg) =>
-			string.Format(CultureInfo.CurrentCulture, self, arg);
-		public string FormatLocal<T1, T2>(T1 arg1, T2 arg2) =>
-			string.Format(CultureInfo.CurrentCulture, self, arg1, arg2);
-		public string FormatLocal<T1, T2, T3>(T1 arg1, T2 arg2, T3 arg3) =>
-			string.Format(CultureInfo.CurrentCulture, self, arg1, arg2, arg3);
 	}
 
 	extension<T>(IEnumerable<T> self) {

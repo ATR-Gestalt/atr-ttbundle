@@ -37,8 +37,7 @@ internal sealed class Tech(
 	public List<string> Unlocks { get; private init; } = [];
 	public Dictionary<string, TechSwap> Swaps { get; private init; } = swaps;
 
-	// Only 3 of 11 properties: area and categories are what swaps can
-	// override. All other properties never differ per swap.
+	/// <summary>交换项只会覆盖 area 与 categories，其余属性不随交换变化。</summary>
 	public TechSwap AsSwap() => new(Vanilla, Area, Categories);
 
 	// Parse a value that may be either a plain integer or a @-prefixed

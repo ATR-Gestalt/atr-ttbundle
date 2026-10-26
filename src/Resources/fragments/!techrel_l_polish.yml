@@ -1,0 +1,5 @@
+﻿l_polish:
+  techrel_repeatable: "Powtarzalna"
+  techrel_requires: "£research£ §HWymaga następujących technologii§!"
+  techrel_unlocks: "£research£ §HOdblokowuje następujących technologii§!"
+  techrel_one_of: "§HMusi posiadać jeden z poniższych§!"

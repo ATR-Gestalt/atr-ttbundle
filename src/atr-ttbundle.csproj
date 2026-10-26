@@ -1,0 +1,102 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<!-- Assembly Identity -->
+	<PropertyGroup>
+		<!--
+			This is used by update checker, and therefore must be
+			the same as git tag name but with no "v" prefix
+		-->
+		<Version>0.1.0</Version>
+		<RootNamespace>StlTechRelGen</RootNamespace>
+		<!-- 产物名：文件名全小写（跨平台安全），展示名用 ATR-TTbundle -->
+		<AssemblyName>atr-ttbundle</AssemblyName>
+		<AssemblyTitle>ATR Tech Tree Bundle</AssemblyTitle>
+		<Product>$(AssemblyTitle)</Product>
+		<Description>为 Stellaris 科技生成「标签 + 科技树」本地化，合并 TechnologyTree 与 Tech Relations 两种表现</Description>
+		<!-- 上游作者，按 MIT 要求保留署名 -->
+		<Company>Clazex (upstream) / ATR (fork)</Company>
+		<Copyright>Copyright (c) 2026 Clazex; fork modifications by ATR</Copyright>
+	</PropertyGroup>
+
+	<!-- Language & Analysis -->
+	<PropertyGroup>
+		<LangVersion>preview</LangVersion>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AnalysisMode>Recommended</AnalysisMode>
+		<NoWarn>$(NoWarn);CA1716</NoWarn> <!-- Suppression: mod is reserved keyword -->
+	</PropertyGroup>
+
+	<!-- Build -->
+	<PropertyGroup>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<RuntimeIdentifiers>win-x64;linux-x64;osx-arm64</RuntimeIdentifiers>
+		<DebugType>portable</DebugType>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+	</PropertyGroup>
+
+	<!-- Publish -->
+	<PropertyGroup>
+		<!--
+			ATRTree 的目标是「玩家拿到 exe 双击就能跑，不用装 .NET 运行时」，
+			所以这里改成 self-contained；单文件在 Release 发布时产出。
+			注意：上游用 HarmonyX 挂 CWTools 进度回调，而 MonoMod 在
+			self-contained 单文件下找不到 clrjit 会崩，因此本项目已把
+			CWToolsHooks 改成空实现，不再依赖 HarmonyX。
+		-->
+		<PublishSingleFile>true</PublishSingleFile>
+		<SelfContained>true</SelfContained>
+		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$(Configuration) == 'Release'">
+		<PathMap>$(MSBuildProjectDirectory)=/</PathMap>
+		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(CI)' == 'true'">
+		<RestoreLockedMode>True</RestoreLockedMode>
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CWTools" Version="0.5.0-alpha" />
+		<PackageReference Include="FSharp.Core" Version="10.1.401" />
+		<!-- HarmonyX 已移除：CWToolsHooks 改为空实现，self-contained 单文件不需要它 -->
+
+		<PackageReference Include="Tomlyn" Version="2.10.1" />
+		<PackageReference Include="YamlDotNet" Version="18.1.0" />
+
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="10.0.12" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="SQLitePCLRaw.config.e_sqlite3" Version="3.0.5" />
+		<!--
+			Use newer shipped native SQLite builds instead of the vulnerable
+			SQLitePCLRaw.lib.e_sqlite3 package (CVE-2025-6965) used by
+			Microsoft.EntityFrameworkCore.Sqlite
+		-->
+		<PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
+
+		<PackageReference Include="Spectre.Console" Version="0.57.2" />
+		<PackageReference Include="Spectre.Console.Cli" Version="0.55.0" />
+
+		<PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.12" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Resources/**" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(Configuration) == 'Debug'">
+		<Content Condition="Exists('config.toml')" Include="config.toml">
+			<TargetPath>$(AssemblyName).toml</TargetPath>
+			<CopyToOutputDirectory>IfDifferent</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+</Project>

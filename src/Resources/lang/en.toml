@@ -1,0 +1,78 @@
+# Interactive prompts
+[prompt]
+search_placeholder_text = "(Type to search)"
+more_choices_text = "(Move up and down to reveal more choices)"
+
+generate_new_config = "New config will be generated..."
+
+welcome = "Welcome to [gold1]Stellaris Tech Relation Generator[/]!"
+read_instructions = "Make sure to [cyan]read instructions[/] carefully!"
+pause = "Press [cyan]Enter[/] to continue..."
+
+ask_game_path = "[white]What is your [cyan]game path[/]?[/]"
+ask_document_path = "[white]What is your [cyan]document path[/]?[/]"
+config_created = "[green]Config successfully created![/]"
+
+close_launcher = "Please [cyan]close the launcher[/] before continuing"
+# {1} = output path — {0} (playset name) intentionally unused
+confirm_use_saved_vanilla = "Use [yellow]vanilla game[/] with output path [yellow]{1}[/]?"
+# {0} = playset name, {1} = target mod name
+confirm_use_saved_target = "Use saved playset [yellow]{0}[/] with target mod [yellow]{1}[/]?"
+choose_playset = "Choose the desired playset (Press [cyan]Esc[/] to use vanilla game)"
+current_playset_prefix = "[green](Current)[/] "
+ask_output_path = "What is the output path for generated files?"
+choose_target_mod = "Choose the target mod to output generated files to"
+target_mod_collision_header = "These mods are located at:"
+# {0} = mod file path
+target_mod_collision_item = "  - {0}"
+# {1} = output path — {0} (playset name) intentionally unused
+confirm_save_vanilla = "Save selection? ([yellow]Vanilla game[/], output path: [yellow]{1}[/])"
+# {0} = playset name, {1} = target mod name
+confirm_save_target = "Save selection? (Playset: [yellow]{0}[/], target mod: [yellow]{1}[/])"
+
+# {0} = file count, {1} = output directory
+saved_l10n = "Written [cyan]{0}[/] localization files to [grey underline]{1}[/]"
+# {0} = relation count, {1} = tech count
+generation_summary = "[green]Successfully generated [cyan]{0}[/] relation entries for [cyan]{1}[/] techs![/]"
+
+
+# Progress bar task descriptions
+[progress]
+connecting_launcher_db = "Connecting to launcher database"
+loading_game = "Loading game (CWTools)"
+loading_scripted_variables = "Loading scripted variables"
+loading_authority_suffixes = "Loading authority suffixes"
+loading_technologies = "Loading technologies"
+building_tech_relationship = "Building tech relationship"
+loading_l10n = "Loading localization"
+generating_l10n = "Generating localization"
+writing_l10n_fragments = "Writing l10n fragments"
+writing_l10n = "Writing localization"
+
+
+# Data processing warnings
+[data]
+# {0} = tech key
+tech_no_category = "Tech {0} has no category"
+# {0} = tech key
+l10n_entry_not_found = "Localization entry of {0} not found"
+# {0} = tech key, {1} = swap key
+l10n_entry_and_swap_not_found = "Localization entry of {0} and swap {1} not found"
+# {0} = tech key, {1} = unknown prereq key
+tech_unknown_prereq = "Tech {0} has unknown prereq: {1}"
+# {0} = tech key
+tech_unnamed_swap = "[red]Tech {0} has an unnamed swap, skipping it[/]"
+# {0} = loc key with circular reference
+l10n_cycle_reference = "Circular reference in loc key \"{0}\", skipping resolution to prevent infinite loop"
+
+
+
+
+# Error messages
+[error]
+config_parse_failed = "[red]Failed to parse config: [/]"
+playset_not_found = "Playset not found!"
+target_mod_not_found = "Target mod not found!"
+multiple_mods_same_name = "Multiple mods with same name detected"
+# {0} = output directory path
+failed_to_access_output_dir = "Failed to access output directory: {0}"

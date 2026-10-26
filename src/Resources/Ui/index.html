@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>ATR-TTbundle · 科技树整合生成器</title>
+<style>
+  :root {
+    --bg: #06090d; --bg2: #0a1017;
+    --panel: #101a24; --panel2: #16212c;
+    --line: #253444; --line-soft: #1b2836;
+    --text: #e2ecf5; --dim: #8ea3b8; --dim2: #647a8e;
+    --accent: #5fc0e4; --accent-dim: #2f728e;
+    --gold: #e8c887; --cyan: #8adcf0; --green: #63c996; --red: #e07a6f;
+    --shadow: 0 1px 2px rgba(0,0,0,.6), 0 8px 24px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 500px at 12% -8%, #12202e 0%, transparent 62%),
+      radial-gradient(900px 420px at 88% -4%, #0f1c27 0%, transparent 58%),
+      var(--bg);
+    color: var(--text);
+    font: 14px/1.6 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    padding: 0 22px 36px;
+  }
+
+  .topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 2px 15px; margin-bottom: 18px;
+    border-bottom: 1px solid #1a2734;
+  }
+  .topbar h1 { font-size: 19px; margin: 0; font-weight: 700; letter-spacing: .2px; color: #eef6fc; }
+  .topbar h1 span { color: var(--accent); font-weight: 600; }
+  .topbar .tag {
+    font-size: 11px; color: #9fb6c9; border: 1px solid #2a3d4e;
+    border-radius: 20px; padding: 2px 10px; background: rgba(95,192,228,.06);
+  }
+  .topbar .desc { font-size: 12px; color: var(--dim2); margin-left: auto; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(238px, .7fr) minmax(370px, 1.4fr);
+    grid-template-rows: auto auto auto auto;
+    gap: 16px; align-items: stretch;
+  }
+  /* 3×3 显式定位：内容开关与预览跨前两行，运行+日志跨后两列 */
+  .g-paths   { grid-column: 1; grid-row: 1; }
+  .g-data    { grid-column: 1; grid-row: 2; }
+  .g-output  { grid-column: 1; grid-row: 3; }
+  .g-toggle  { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; }
+  .g-preview { grid-column: 3; grid-row: 1; display: flex; flex-direction: column; }
+  .g-runlog  { grid-column: 2 / 4; grid-row: 3; display: flex; flex-direction: column; }
+  .g-treelists { grid-column: 2 / 4; grid-row: 2; }
+  .g-treelists .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .g-advanced { grid-column: 1 / 4; grid-row: 4; }
+  .grid > .card { margin-bottom: 0; }
+  .g-preview #preview { flex: 1; max-height: 560px; min-height: 260px; overflow-y: auto; }
+  /* 预览区滚动条 */
+  #preview::-webkit-scrollbar { width: 8px; }
+  #preview::-webkit-scrollbar-track { background: transparent; }
+  #preview::-webkit-scrollbar-thumb { background: #2a3d4e; border-radius: 4px; }
+  #preview::-webkit-scrollbar-thumb:hover { background: #3a5266; }
+  .g-runlog #log { flex: 1; height: auto; min-height: 80px; }
+  .g-toggle .sec:last-child { margin-top: auto; }
+  @media (max-width: 1240px) { .grid { grid-template-columns: minmax(290px, 1fr) minmax(230px, .8fr); } }
+  @media (max-width: 860px)  { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: linear-gradient(180deg, var(--panel2) 0%, var(--panel) 100%);
+    border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: var(--shadow); padding: 14px 16px 16px; margin-bottom: 14px;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(120,180,215,.22), transparent);
+  }
+  .card > h2 {
+    font-size: 12.5px; margin: 0 0 13px; font-weight: 600; letter-spacing: .5px;
+    color: #dfeaf4; display: flex; align-items: center; gap: 8px;
+  }
+  .card > h2::before {
+    content: ""; width: 3px; height: 14px; border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-dim));
+    box-shadow: 0 0 8px rgba(95,192,228,.45);
+  }
+  .card > h2 .hint { font-weight: 400; letter-spacing: 0; color: var(--dim2); font-size: 11px; }
+
+  label.fl {
+    display: block; font-size: 11.5px; color: var(--dim);
+    margin: 12px 0 5px; letter-spacing: .2px;
+  }
+  label.fl:first-of-type { margin-top: 0; }
+  input[type=text], select {
+    width: 100%; background: #0a1118; color: #dbe8f2;
+    border: 1px solid #24333f; border-radius: 6px; padding: 7px 10px;
+    font: 12.5px/1.45 Consolas, "Cascadia Mono", monospace;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+  }
+  input[type=text]:hover, select:hover { border-color: #2f4557; background: #0c141c; }
+  input[type=text]:focus, select:focus {
+    outline: none; border-color: var(--accent-dim); background: #0c141c;
+    box-shadow: 0 0 0 3px rgba(95,192,228,.13);
+  }
+  .row { display: flex; gap: 8px; align-items: flex-end; }
+  .row > * { flex: 1; min-width: 0; }
+  .row > .fixed { flex: 0 0 auto; }
+
+  button {
+    font: 600 12.5px/1 "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(180deg, #58b6da 0%, #3d8cae 100%);
+    color: #04121a; border: 1px solid #2d7693; border-radius: 6px;
+    padding: 9px 16px; cursor: pointer;
+    box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 2px 6px rgba(0,0,0,.35);
+    transition: filter .15s, transform .05s;
+  }
+  button:hover:not(:disabled) { filter: brightness(1.13); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: .38; cursor: default; }
+  button.ghost {
+    background: rgba(255,255,255,.02); color: #c6d6e4;
+    border: 1px solid #2a3a48; font-weight: 500; box-shadow: none;
+  }
+  button.ghost:hover:not(:disabled) { border-color: var(--accent-dim); color: #eaf4fb; background: rgba(95,192,228,.07); }
+  button.sm { padding: 6px 10px; font-size: 11.5px; }
+
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .checks label {
+    display: flex; align-items: center; gap: 7px; margin: 0;
+    color: #c6d6e4; font-size: 12.5px; cursor: pointer;
+    padding: 5px 3px; border-radius: 5px; transition: background .12s;
+  }
+  .checks label:hover { background: rgba(95,192,228,.07); }
+  .checks input[type=checkbox] {
+    appearance: none; width: 14px; height: 14px; flex: 0 0 auto;
+    border: 1px solid #3a5265; border-radius: 3px; background: #0a1118;
+    cursor: pointer; position: relative; transition: all .12s;
+  }
+  .checks input[type=checkbox]:hover { border-color: var(--accent-dim); }
+  .checks input[type=checkbox]:checked {
+    background: linear-gradient(180deg, #4fa8ca, #357f9e);
+    border-color: #6ec3e2;
+    box-shadow: 0 0 6px rgba(95,192,228,.35);
+  }
+  .checks input[type=checkbox]:checked::after {
+    content: ""; position: absolute; left: 3.5px; top: 1px;
+    width: 4px; height: 8px; border: solid #061019;
+    border-width: 0 2px 2px 0; transform: rotate(42deg);
+  }
+  .hint { font-size: 11px; color: var(--dim2); margin-top: 9px; line-height: 1.6; }
+  .hint.warn { color: #cf9a5f; }
+
+  #preview {
+    background: linear-gradient(180deg, #060b10 0%, #09121a 100%);
+    border: 1px solid #2b3f50; border-left: 2px solid #3d6076;
+    border-radius: 7px;
+    box-shadow: inset 0 0 32px rgba(0,0,0,.7), 0 0 18px rgba(95,192,228,.05);
+    padding: 13px 15px; min-height: 320px; max-height: 620px; overflow-y: auto;
+    font: 13px/1.62 "Segoe UI", "Microsoft YaHei", sans-serif;
+  }
+  #preview .desc { color: #a9bfd2; margin-bottom: 12px; }
+  #preview .label-line {
+    color: var(--gold); margin: 10px 0 2px; letter-spacing: .2px;
+    padding-bottom: 9px; border-bottom: 1px solid #1b2836;
+    text-shadow: 0 0 12px rgba(232,200,135,.18);
+  }
+  #preview .sec-title { color: #93bbd2; margin: 12px 0 5px; font-size: 12.5px; }
+  #preview .item { color: #a9bfd2; padding-left: 10px; font-size: 12.5px; line-height: 1.8; }
+  #preview .item .tech { color: var(--cyan); }
+  #preview .item.oneof { color: #c0a271; }
+  #preview .tree-title { color: #93bbd2; margin: 13px 0 3px; font-size: 12.5px; }
+  #preview pre {
+    margin: 4px 0 0; font: 12px/1.6 Consolas, "Cascadia Mono", monospace;
+    color: #9fb7ca; white-space: pre; overflow-x: auto;
+  }
+  #preview .dim { color: #64798b; }
+  #preview .empty { color: #64798b; font-style: italic; }
+
+  #log {
+    background: #03070a; border: 1px solid #1e2b37; border-radius: 7px;
+    padding: 10px 12px; height: 170px; overflow-y: auto; white-space: pre-wrap;
+    font: 11.5px/1.7 Consolas, "Cascadia Mono", monospace; color: #8598ab;
+  }
+  #log .ok { color: var(--green); }
+  #log .err { color: var(--red); }
+
+  .status { font-size: 11.5px; color: var(--dim); margin-top: 11px; display: flex; align-items: center; gap: 7px; }
+  .status::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--dim2); transition: background .2s;
+  }
+  .status.running::before { background: var(--gold); animation: pulse 1s infinite; }
+  .status.done::before { background: var(--green); }
+  .status.error::before { background: var(--red); }
+  @keyframes pulse { 50% { opacity: .3; } }
+
+  #modal { display: none; position: fixed; inset: 0; background: rgba(2,6,10,.78); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+  #modal.show { display: flex; }
+  .modal-box {
+    background: linear-gradient(180deg, #16212c, #101a24);
+    border: 1px solid #2e4254; border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.65);
+    width: min(700px, 92vw); max-height: 82vh; display: flex; flex-direction: column;
+  }
+  .modal-head { padding: 13px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+  .modal-head .path { flex: 1; font: 11.5px/1.45 Consolas, monospace; color: var(--dim); word-break: break-all; }
+  .modal-body { overflow-y: auto; padding: 6px 0; flex: 1; min-height: 280px; }
+  .dir-item { padding: 7px 18px; cursor: pointer; font-size: 12.5px; display: flex; align-items: center; gap: 9px; }
+  .dir-item:hover { background: rgba(95,192,228,.1); }
+  .dir-item .ico { color: var(--accent); width: 16px; text-align: center; }
+  .dir-item.dim { color: var(--dim2); cursor: default; }
+  .dir-item.dim:hover { background: none; }
+  .modal-foot { padding: 11px 16px; border-top: 1px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* ---- 紧凑化：让三栏尽量在一屏内 ---- */
+  .card { padding: 12px 14px 13px; margin-bottom: 12px; }
+  label.fl { margin: 9px 0 4px; }
+  .checks label { padding: 3px; }
+  #langBox { grid-template-columns: 1fr 1fr 1fr; }
+  #preview { min-height: 230px; max-height: 380px; }
+  #log { height: 120px; }
+
+  /* ---- 运行区并入输出选项 ---- */
+  .runzone {
+    margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .runzone .status { margin-top: 2px; }
+
+  /* ---- 内容开关列拉满整列高度 ---- */
+  #toggleCard .sec { margin: 0 0 16px; }
+  #toggleCard .sec:last-child { margin-bottom: 0; }
+  #toggleCard .sec + .sec { border-top: 1px solid rgba(37,52,68,.45); padding-top: 14px; }
+  /* 复选框行距拉开，让这一栏视觉上更饱满 */
+  #toggleCard .checks label { padding: 6px 3px; }
+
+  /* ---- 输出选项横跨前两栏 ---- */
+  .grid > .span2 { grid-column: 1 / span 2; }
+  @media (max-width: 860px) { .grid > .span2 { grid-column: auto; } }
+  .span2 .runzone { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+  .span2 .runzone .row { margin-bottom: 10px; }
+
+  /* ---- 输出卡片压缩：语言 4 列 + 按钮横排 ---- */
+  #langBox { grid-template-columns: 1fr 1fr; }
+  .span2 .runzone {
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px solid var(--line-soft);
+    display: flex; flex-direction: row; align-items: center; gap: 10px;
+  }
+  .span2 .runzone button { flex: 0 0 auto; }
+  .span2 .runzone .status { margin: 0 0 0 auto; }
+
+  /* ---- 运行按钮位于右侧日志卡片顶部 ---- */
+  .actions { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .actions .status { margin: 0 0 0 auto; }
+
+  /* ---- 非当前模式的分组置灰常驻 ---- */
+  .inactive { opacity: .38; filter: saturate(.4); transition: opacity .18s; }
+  .inactive::after { content: "（当前模式不使用）"; font-size: 10.5px; color: var(--dim2); }
+
+  /* ---- 运行卡片：按钮竖排 ---- */
+  .actions-col { display: flex; flex-direction: column; gap: 8px; }
+  .actions-col button { width: 100%; }
+  #status { margin-top: 12px; }
+  /* ---- 段落顺序控件 ---- */
+  .sec-order { display: flex; flex-direction: column; gap: 2px; }
+  .sec-order .ord {
+    display: flex; align-items: center; gap: 7px;
+    padding: 4px 3px; border-radius: 5px; font-size: 12.5px; color: #c6d6e4;
+  }
+  .sec-order .ord:hover { background: rgba(95,192,228,.07); }
+  .sec-order .ord input[type=checkbox] { appearance: none; width: 14px; height: 14px;
+    border: 1px solid #3a5265; border-radius: 3px; background: #0a1118; cursor: pointer; position: relative; }
+  .sec-order .ord input[type=checkbox]:checked { background: linear-gradient(180deg,#4fa8ca,#357f9e); border-color:#6ec3e2; }
+  .sec-order .ord input[type=checkbox]:checked::after { content:""; position:absolute; left:3.5px; top:1px; width:4px; height:8px;
+    border: solid #061019; border-width: 0 2px 2px 0; transform: rotate(42deg); }
+  .sec-order .ord .nm { flex: 1; }
+  .sec-order .ord button { padding: 1px 7px; font-size: 11px; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>ATR<span>-TTbundle</span></h1>
+  <span class="tag">科技树整合生成器</span>
+  <span class="desc">把树形展示与标签引用合并进同一条科技描述</span>
+</div>
+
+<div class="grid">
+  <!-- ===== 第 1 列 行 1：路径 ===== -->
+  <div class="card g-paths">
+    <h2>路径</h2>
+    <label class="fl">游戏安装目录</label>
+    <div class="row">
+      <input id="gamePath" type="text" placeholder="D:\SteamLibrary\steamapps\common\Stellaris">
+      <button class="ghost sm fixed" data-browse="gamePath">浏览</button>
+      <button class="ghost sm fixed" id="btnAutoGame">自动</button>
+    </div>
+    <label class="fl">群星用户数据目录（模组文件夹的上一级）</label>
+    <div class="row">
+      <input id="docPath" type="text" placeholder="C:\Users\你\Documents\Paradox Interactive\Stellaris">
+      <button class="ghost sm fixed" data-browse="docPath">浏览</button>
+      <button class="ghost sm fixed" id="btnAutoDoc">自动</button>
+    </div>
+    <div class="hint">「自动」会按常见安装位置探测；探测不到就用「浏览」在弹窗里点选。</div>
+  </div>
+
+  <!-- ===== 第 1 列 行 2：数据范围与目标 ===== -->
+  <div class="card g-data">
+    <h2>数据范围与目标</h2>
+    <label class="fl">数据范围</label>
+    <select id="mode">
+      <option value="vanilla">只解析原版科技</option>
+      <option value="playset">原版 + 播放集里的 MOD</option>
+    </select>
+    <label class="fl">播放集（数据来源与输出定位）</label>
+    <select id="playset"></select>
+    <label class="fl">数据来源 MOD <span class="hint" style="margin:0;padding:0;font-weight:400">播放集模式 · 留空=全部</span></label>
+    <select id="sourceMod"></select>
+    <div class="checks" style="margin-top:6px">
+      <label><input type="checkbox" id="dataIncludeVanilla" checked> 包含原版科技</label>
+    </div>
+
+    <label class="fl">输出目标</label>
+    <select id="targetMod"></select>
+    <label class="fl">输出目录（未指定目标 MOD 时）</label>
+    <div class="row">
+      <input id="targetDir" type="text" placeholder="...\mod\TechnologyTree">
+      <button class="ghost sm fixed" data-browse="targetDir">浏览</button>
+    </div>
+    <div class="sec" style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(37,52,68,.45)">
+      <label class="fl">数据过滤</label>
+      <div class="checks">
+        <label><input type="checkbox" id="dataExcludeEvent"> 排除事件科技</label>
+        <label><input type="checkbox" id="dataExcludeGateway"> 排除网关科技</label>
+        <label><input type="checkbox" id="dataExcludeStart"> 排除起始科技</label>
+      </div>
+      <div class="hint">网关科技 = 科技定义里带 <code>gateway = xxx</code> 的科技（科技树分支节点）。</div>
+    </div>
+    <div class="hint warn">生成会先清空目标模组的整个 localisation/ 目录。</div>
+  </div>
+
+  <!-- ===== 第 2 列 行 1-2：内容开关（拉长至与数据范围底部齐平） ===== -->
+  <div class="card g-toggle" id="toggleCard">
+    <h2>内容开关 <span class="hint">勾选后右侧立即变化</span></h2>
+
+    <div class="sec">
+      <label class="fl">标签行</label>
+      <div class="checks">
+        <label><input type="checkbox" id="lblEnabled" checked> 总开关</label>
+        <label><input type="checkbox" id="lblAreaIcon" checked> 领域图标</label>
+        <label><input type="checkbox" id="lblAreaName" checked> 领域名</label>
+        <label><input type="checkbox" id="lblTier" checked> T 级</label>
+        <label><input type="checkbox" id="lblCategory" checked> 科技类别</label>
+        <label><input type="checkbox" id="lblRare" checked> 稀有标记</label>
+        <label><input type="checkbox" id="lblDangerous" checked> 危险标记</label>
+        <label><input type="checkbox" id="lblRepeatable" checked> 可重复标记</label>
+        <label><input type="checkbox" id="lblCost" checked> 研究成本</label>
+        <label><input type="checkbox" id="lblColor" checked> 按领域着色</label>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div><label class="fl">T0 显示文本</label><input id="lblTierZero" type="text" value="T0"></div>
+        <div><label class="fl">分隔符（空格可用）</label><input id="lblDelimiter" type="text" value=" "></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <label class="fl">段落 <span style="color:var(--dim2);font-weight:400">勾选启用 · ↑↓ 调顺序</span></label>
+      <div class="sec-order" id="secOrder"></div>
+    </div>
+
+  </div>
+
+  <!-- ===== 第 3 列 行 1-2：效果预览（拉长至与数据范围底部齐平） ===== -->
+  <div class="card g-preview">
+    <h2>效果预览 <span class="hint">示例科技 · 实时渲染</span></h2>
+    <div id="preview"></div>
+    <div class="hint">示例同时具备 稀有 / 危险 / 可循环 / 成本 / 多重前置 / 多级解锁。</div>
+  </div>
+
+  <!-- ===== 第 1 列 行 3：输出选项 ===== -->
+  <div class="card g-output">
+    <h2>输出选项</h2>
+    <div class="row">
+      <div>
+        <label class="fl">文件名前缀</label>
+        <input id="filePrefix" type="text" value="zz_techtree">
+      </div>
+    </div>
+    <div class="checks" style="margin-top:8px">
+      <label><input type="checkbox" id="outputWriteFragments" checked> 写出片段文件</label>
+    </div>
+    <label class="fl">生成语言（全不选 = 全部 10 种）</label>
+    <div class="checks" id="langBox"></div>
+  </div>
+
+  <!-- ===== 第 2-3 列 行 3：运行 + 日志（跨 23 两列，与输出选项等高） ===== -->
+  <div class="card g-runlog">
+    <h2>运行与日志</h2>
+    <div class="actions">
+      <button id="btnGen">开始生成</button>
+      <button id="btnSave" class="ghost">保存配置</button>
+      <div class="status" id="status">就绪</div>
+    </div>
+    <div id="log">等待操作…</div>
+  </div>
+
+  <!-- ===== 科技树与列表（跨列大卡片） ===== -->
+  <div class="card g-treelists">
+    <h2>科技树与列表设置 <span class="hint">树的画法与前置/解锁列表</span></h2>
+    <div class="cols2">
+    <div class="sec">
+      <label class="fl">树的画法</label>
+      <div class="checks" style="margin-bottom:4px">
+        <label><input type="checkbox" id="treeEnabled" checked> 启用科技树</label>
+      </div>
+      <select id="treeDirection">
+        <option value="down">只画下游（能解锁什么）</option>
+        <option value="up">只画上游（前置链）</option>
+        <option value="both">上下游都画</option>
+        <option value="none">不画树</option>
+      </select>
+      <select id="treeIndent" style="margin-top:6px">
+        <option value="ascii">|-- 缩进</option>
+        <option value="unicode">├─ 缩进（字体未验证）</option>
+      </select>
+      <div class="row" style="margin-top:6px">
+        <div><label class="fl">树标题</label><input id="treeTitle" type="text" value="科技树:"></div>
+        <div><label class="fl">缩进宽度</label><input id="treeIndentWidth" type="text" value="3"></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div><label class="fl">树行数上限</label><input id="maxLines" type="text" value="100"></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div><label class="fl">节点模板</label><input id="treeNodeTemplate" type="text" value="{tech} (T{tier})"></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div><label class="fl">截断文本</label><input id="treeTruncateText" type="text" value="…还有未显示的解锁项"></div>
+      </div>
+      <div class="checks" style="margin-top:4px">
+        <label><input type="checkbox" id="treeColorByArea"> 按领域着色（树）</label>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="checks">
+        <label><input type="checkbox" id="listEnabled" checked> 启用列表</label>
+        <label><input type="checkbox" id="listShowAreaIcon" checked> 列表项带图标</label>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div><label class="fl">前置标题（空=内置）</label><input id="listRequiresTitle" type="text" placeholder="$techrel_requires$"></div>
+        <div><label class="fl">解锁标题（空=内置）</label><input id="listUnlocksTitle" type="text" placeholder="$techrel_unlocks$"></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div><label class="fl">「之一」标题（空=内置）</label><input id="listOneOfTitle" type="text" placeholder="$techrel_one_of$"></div>
+        <div><label class="fl">每段最多条数</label><input id="listMaxItems" type="text" value="10"></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div><label class="fl">列表截断文本</label><input id="listTruncateText" type="text" value="…还有 {n} 项"></div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- ===== 第 4 行：高级 ===== -->
+  <div class="card g-advanced">
+    <h2>高级 <span class="hint">不常用 · 一般保持默认</span></h2>
+    <div class="row">
+      <div>
+        <label class="fl">语言覆盖（空=自动）</label>
+        <input id="advancedOverrideLanguage" type="text" placeholder="留空自动">
+      </div>
+      <div>
+        <label class="fl">更新检查</label>
+        <div class="checks" style="margin-top:2px">
+          <label><input type="checkbox" id="advancedCheckUpdate"> 检查更新</label>
+        </div>
+      </div>
+    </div>
+    <div class="checks" style="margin-top:8px">
+      <label><input type="checkbox" id="advancedYesmen"> 自动确认（批处理用）</label>
+      <label><input type="checkbox" id="advancedSuppressErrors" checked> 抑制 CWTools 错误日志</label>
+    </div>
+    <div class="hint">更新检查在当前 fork 中不执行，仅保留配置兼容；自动确认用于无人值守运行。</div>
+  </div>
+</div>
+
+<!-- 目录选择弹窗 -->
+<div id="modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <button class="ghost sm" id="btnUp">↑ 上级</button>
+      <div class="path" id="modalPath"></div>
+    </div>
+    <div class="modal-body" id="modalList"></div>
+    <div class="modal-foot">
+      <button class="ghost" id="btnCancel">取消</button>
+      <button id="btnPick">选择此文件夹</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LANGS = ["simp_chinese","english","french","german","spanish","russian","polish","braz_por","japanese","korean"];
+const LANG_NAMES = {simp_chinese:"简中",english:"英语",french:"法语",german:"德语",spanish:"西语",
+  russian:"俄语",polish:"波兰语",braz_por:"葡语(巴)",japanese:"日语",korean:"韩语"};
+const AREA_ICON = {physics:"🔬", society:"🧬", engineering:"⚙️"};
+const AREA_NAME = {physics:"物理学", society:"社会学", engineering:"工程学"};
+
+const $ = id => document.getElementById(id);
+
+/* ---- 段落顺序（对应 [sections].order） ---- */
+const SECTION_DEFS = { requires: "前置列表", unlocks: "解锁列表", tree: "科技树" };
+let sectionOrder = ["requires", "unlocks", "tree"];
+let sectionEn = { requires: true, unlocks: true, tree: true };
+
+function renderSections() {
+  const box = $("secOrder");
+  box.innerHTML = "";
+  sectionOrder.forEach((id, idx) => {
+    const row = document.createElement("div");
+    row.className = "ord";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = sectionEn[id];
+    cb.addEventListener("change", () => { sectionEn[id] = cb.checked; renderPreview(); });
+    const nm = document.createElement("span");
+    nm.className = "nm";
+    nm.textContent = SECTION_DEFS[id];
+    const up = document.createElement("button");
+    up.className = "ghost sm"; up.textContent = "↑"; up.title = "上移";
+    up.disabled = idx === 0;
+    up.onclick = () => {
+      [sectionOrder[idx - 1], sectionOrder[idx]] = [sectionOrder[idx], sectionOrder[idx - 1]];
+      renderSections(); renderPreview();
+    };
+    const down = document.createElement("button");
+    down.className = "ghost sm"; down.textContent = "↓"; down.title = "下移";
+    down.disabled = idx === sectionOrder.length - 1;
+    down.onclick = () => {
+      [sectionOrder[idx], sectionOrder[idx + 1]] = [sectionOrder[idx + 1], sectionOrder[idx]];
+      renderSections(); renderPreview();
+    };
+    row.appendChild(cb); row.appendChild(nm); row.appendChild(up); row.appendChild(down);
+    box.appendChild(row);
+  });
+}
+let pollTimer = null;
+
+/* 演示用合成科技：同时具备稀有/危险/可循环/成本/多重前置/OR 前置/多级解锁 */
+const SAMPLE = {
+  area: "physics", tier: 3, categoryName: "粒子物理",
+  rare: true, dangerous: true, repeatable: true, levels: 5, cost: 8000,
+  desc: "对零点场的深入研究揭示了真空并非空无一物——它时刻翻涌着足以撕裂现实的可能性。",
+  requires: [
+    { name: "量子场论", tier: 2, area: "physics" },
+    { name: "暗物质探测", tier: 2, area: "physics" }
+  ],
+  requireOneOf: [
+    { name: "零点能源", tier: 2, area: "physics" },
+    { name: "真空衰变理论", tier: 2, area: "physics" }
+  ],
+  unlocks: [
+    { name: "现实编辑器", tier: 4, area: "physics" },
+    { name: "零点反应堆", tier: 4, area: "engineering" },
+    { name: "维度锚定器", tier: 4, area: "physics" },
+    { name: "真空能护盾", tier: 4, area: "engineering" },
+    { name: "量子纠缠通讯", tier: 4, area: "physics" },
+    { name: "时空折叠引擎", tier: 5, area: "engineering" }
+  ],
+  tree: [
+    { name: "现实编辑器", tier: 4, area: "physics", children: [
+      { name: "局部现实重写", tier: 5, area: "physics", children: [
+        { name: "宇宙微调", tier: 5, area: "physics", children: [] }
+      ]},
+      { name: "物质重构器", tier: 5, area: "engineering", children: [] }
+    ]},
+    { name: "零点反应堆", tier: 4, area: "engineering", children: [
+      { name: "反物质约束场", tier: 5, area: "engineering", children: [] },
+      { name: "奇点发电机", tier: 5, area: "engineering", children: [
+        { name: "戴森场论", tier: 5, area: "physics", children: [] }
+      ]}
+    ]},
+    { name: "维度锚定器", tier: 4, area: "physics", children: [
+      { name: "相位稳定场", tier: 5, area: "physics", children: [] }
+    ]},
+    { name: "真空能护盾", tier: 4, area: "engineering", children: [] },
+    { name: "量子纠缠通讯", tier: 4, area: "physics", children: [
+      { name: "跨银河即时通讯", tier: 5, area: "physics", children: [] }
+    ]},
+    { name: "时空折叠引擎", tier: 5, area: "engineering", children: [] }
+  ]
+};
+
+for (const code of LANGS) {
+  const l = document.createElement("label");
+  l.innerHTML = `<input type="checkbox" value="${code}" class="lang"> ${LANG_NAMES[code]}`;
+  $("langBox").appendChild(l);
+}
+
+function log(text, cls) {
+  const el = $("log");
+  const line = document.createElement("div");
+  if (cls) line.className = cls;
+  line.textContent = text;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+function collectConfig() {
+  const langs = [...document.querySelectorAll(".lang")].filter(i => i.checked).map(i => i.value);
+  const sections = sectionOrder.filter(id => sectionEn[id]);
+  return {
+    gamePath: $("gamePath").value.trim(),
+    documentPath: $("docPath").value.trim(),
+    mode: $("mode").value,
+    playset: $("playset").value,
+    sourceMod: $("sourceMod").value,
+    targetMod: $("targetMod").value,
+    targetDir: $("targetDir").value.trim(),
+    filePrefix: $("filePrefix").value.trim() || "zz_techtree",
+    writeFragments: $("outputWriteFragments").checked,
+    languages: langs,
+    sections,
+    data: {
+      includeVanilla: $("dataIncludeVanilla").checked,
+      excludeEventTechs: $("dataExcludeEvent").checked,
+      excludeGatewayTechs: $("dataExcludeGateway").checked,
+      excludeStartTechs: $("dataExcludeStart").checked
+    },
+    tree: {
+      enabled: $("treeEnabled").checked,
+      direction: $("treeDirection").value,
+      indent: $("treeIndent").value,
+      indentWidth: parseInt($("treeIndentWidth").value, 10) || 3,
+      maxLines: parseInt($("maxLines").value, 10) || 100,
+      title: $("treeTitle").value,
+      truncateText: $("treeTruncateText").value,
+      nodeTemplate: $("treeNodeTemplate").value,
+      colorByArea: $("treeColorByArea").checked
+    },
+    labels: {
+      enabled: $("lblEnabled").checked,
+      areaIcon: $("lblAreaIcon").checked, areaName: $("lblAreaName").checked,
+      tier: $("lblTier").checked, category: $("lblCategory").checked,
+      rare: $("lblRare").checked, dangerous: $("lblDangerous").checked,
+      repeatable: $("lblRepeatable").checked, cost: $("lblCost").checked,
+      tierZero: $("lblTierZero").value,
+      delimiter: $("lblDelimiter").value,
+      color: $("lblColor").checked
+    },
+    lists: {
+      enabled: $("listEnabled").checked,
+      requiresTitle: $("listRequiresTitle").value.trim(),
+      unlocksTitle: $("listUnlocksTitle").value.trim(),
+      oneOfTitle: $("listOneOfTitle").value.trim(),
+      maxItems: parseInt($("listMaxItems").value, 10) || 10,
+      truncateText: $("listTruncateText").value,
+      showAreaIcon: $("listShowAreaIcon").checked
+    },
+    advanced: {
+      checkUpdate: $("advancedCheckUpdate").checked,
+      overrideLanguage: $("advancedOverrideLanguage").value.trim(),
+      yesmen: $("advancedYesmen").checked,
+      suppressesCwtoolsErrors: $("advancedSuppressErrors").checked
+    }
+  };
+}
+
+async function loadConfig() {
+  try {
+    const c = await api("/api/config");
+    $("gamePath").value = c.gamePath || "";
+    $("docPath").value = c.documentPath || "";
+    $("mode").value = c.mode === "playset" ? "playset" : "vanilla";
+    $("filePrefix").value = c.filePrefix || "zz_techtree";
+    $("outputWriteFragments").checked = c.writeFragments !== undefined ? !!c.writeFragments : true;
+    $("targetDir").value = c.targetDir || "";
+    pendingPlayset = c.playset || "";
+    pendingMods = { sourceMod: c.sourceMod || "", targetMod: c.targetMod || "" };
+
+    const t = c.tree || {};
+    $("treeEnabled").checked = t.enabled !== false;
+    $("treeDirection").value = t.direction || "down";
+    $("treeIndent").value = t.indent || "ascii";
+    $("treeIndentWidth").value = t.indentWidth || 3;
+    $("maxLines").value = t.maxLines || 100;
+    $("treeTitle").value = t.title !== undefined ? t.title : "科技树:";
+    $("treeTruncateText").value = t.truncateText !== undefined ? t.truncateText : "…还有未显示的解锁项";
+    $("treeNodeTemplate").value = t.nodeTemplate !== undefined ? t.nodeTemplate : "{tech} (T{tier})";
+    $("treeColorByArea").checked = !!t.colorByArea;
+
+    const L = c.labels || {};
+    $("lblEnabled").checked = L.enabled !== false;
+    $("lblAreaIcon").checked = L.areaIcon !== false;
+    $("lblAreaName").checked = L.areaName !== false;
+    $("lblTier").checked = L.tier !== false;
+    $("lblCategory").checked = L.category !== false;
+    $("lblRare").checked = L.rare !== false;
+    $("lblDangerous").checked = L.dangerous !== false;
+    $("lblRepeatable").checked = L.repeatable !== false;
+    $("lblCost").checked = !!L.cost;
+    $("lblTierZero").value = L.tierZero !== undefined ? L.tierZero : "T0";
+    $("lblDelimiter").value = L.delimiter !== undefined ? L.delimiter : " ";
+    $("lblColor").checked = L.color !== false;
+
+    const li = c.lists || {};
+    $("listEnabled").checked = li.enabled !== false;
+    $("listRequiresTitle").value = li.requiresTitle || "";
+    $("listUnlocksTitle").value = li.unlocksTitle || "";
+    $("listOneOfTitle").value = li.oneOfTitle || "";
+    $("listMaxItems").value = li.maxItems || 10;
+    $("listTruncateText").value = li.truncateText !== undefined ? li.truncateText : "…还有 {n} 项";
+    $("listShowAreaIcon").checked = li.showAreaIcon !== false;
+
+    const d = c.data || {};
+    $("dataIncludeVanilla").checked = d.includeVanilla !== false;
+    $("dataExcludeEvent").checked = d.excludeEventTechs !== false;
+    $("dataExcludeGateway").checked = d.excludeGatewayTechs !== false;
+    $("dataExcludeStart").checked = !!d.excludeStartTechs;
+
+    const a = c.advanced || {};
+    $("advancedCheckUpdate").checked = !!a.checkUpdate;
+    $("advancedOverrideLanguage").value = a.overrideLanguage || "";
+    $("advancedYesmen").checked = !!a.yesmen;
+    $("advancedSuppressErrors").checked = a.suppressesCwtoolsErrors !== false;
+
+    // 段落：按 order 恢复顺序与启用状态
+    const order = (c.sections && c.sections.length ? c.sections : ["requires", "unlocks", "tree"]);
+    sectionOrder = order.filter(k => SECTION_DEFS[k]);
+    for (const k of Object.keys(SECTION_DEFS)) if (!sectionOrder.includes(k)) sectionOrder.push(k);
+    sectionEn = { requires: false, unlocks: false, tree: false };
+    for (const k of order) if (k in sectionEn) sectionEn[k] = true;
+    renderSections();
+
+    for (const cb of document.querySelectorAll(".lang")) cb.checked = (c.languages || []).includes(cb.value);
+    toggleMode();
+    syncTreeControls();
+    syncTargetControls();
+    renderPreview();
+    await loadPlaysets();
+  } catch (e) { log("读取配置失败：" + e.message, "err"); }
+}
+
+async function saveConfig() {
+  const r = await api("/api/config", {
+    method: "POST", headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(collectConfig())
+  });
+  log(r.message || "配置已保存", "ok");
+}
+
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function renderPreview() {
+  const c = collectConfig();
+  const L = c.labels;
+  const out = [`<div class="desc">${esc(SAMPLE.desc)}</div>`];
+
+  // ---- 标签行 ----
+  if (L.enabled) {
+    const sep = L.delimiter === "" ? " " : L.delimiter;
+    const bits = [];
+    if (L.areaIcon) bits.push(AREA_ICON[SAMPLE.area] || "");
+    if (L.areaName) bits.push(AREA_NAME[SAMPLE.area] || "");
+    if (L.tier) bits.push("T" + SAMPLE.tier);
+
+    const cats = L.category ? "(" + SAMPLE.categoryName + ")" : "";
+    const flags = [];
+    if (L.rare) flags.push("稀有");
+    if (L.dangerous) flags.push("危险");
+    if (L.repeatable) flags.push("可循环 ×" + SAMPLE.levels);
+    if (L.cost) flags.push("成本 " + SAMPLE.cost);
+
+    const lineParts = [];
+    const head = bits.filter(Boolean).join(sep);
+    if (head) lineParts.push(head);
+    if (cats) lineParts.push(cats);
+    if (flags.length) lineParts.push("(" + flags.join(sep) + ")");
+
+    if (lineParts.length) out.push(`<div class="label-line">${esc(lineParts.join(sep))}</div>`);
+  }
+
+  // ---- 段落 ----
+  const item = (t, indent) => {
+    const ico = c.lists.showAreaIcon ? (AREA_ICON[t.area] || "") + " " : "";
+    const pad = indent ? 'style="padding-left:22px"' : "";
+    return `<div class="item" ${pad}>• ${ico}<span class="tech">${esc(t.name)}</span> <span class="dim">(T${t.tier})</span></div>`;
+  };
+  const trunc = (n) => {
+    const txt = c.lists.truncateText || "…还有 {n} 项";
+    return `<div class="item dim">${esc(txt.replace("{n}", String(n)))}</div>`;
+  };
+
+  for (const sec of c.sections) {
+    if (sec === "requires" && c.lists.enabled) {
+      out.push(`<div class="sec-title">${esc(c.lists.requiresTitle || "需要下列科技")}</div>`);
+      const shown = SAMPLE.requires.slice(0, c.lists.maxItems);
+      for (const r of shown) out.push(item(r, false));
+      if (SAMPLE.requires.length > c.lists.maxItems) out.push(trunc(SAMPLE.requires.length - c.lists.maxItems));
+      if (SAMPLE.requireOneOf.length) {
+        out.push(`<div class="item oneof" style="padding-left:10px">• ${esc(c.lists.oneOfTitle || "需要以下之一")}</div>`);
+        const shown2 = SAMPLE.requireOneOf.slice(0, Math.max(0, c.lists.maxItems - shown.length));
+        for (const r of shown2) out.push(item(r, true));
+        if (SAMPLE.requireOneOf.length > shown2.length) out.push(trunc(SAMPLE.requireOneOf.length - shown2.length));
+      }
+    }
+    if (sec === "unlocks" && c.lists.enabled) {
+      out.push(`<div class="sec-title">${esc(c.lists.unlocksTitle || "解锁下列科技")}</div>`);
+      const shown = SAMPLE.unlocks.slice(0, c.lists.maxItems);
+      for (const u of shown) out.push(item(u, false));
+      if (SAMPLE.unlocks.length > c.lists.maxItems) out.push(trunc(SAMPLE.unlocks.length - c.lists.maxItems));
+    }
+    if (sec === "tree" && c.tree.enabled) {
+      const dir0 = c.tree.direction || "down";
+      if (dir0 === "none") continue;
+      const lines = [];
+      const unicode = c.tree.indent === "unicode";
+      const w = Math.max(1, c.tree.indentWidth || 3);
+      const unit = (unicode ? "│" : "|") + " ".repeat(w);
+      const prefix = d => unit.repeat(d) + (unicode ? "├─ " : "-- ");
+      const nodeText = n => {
+        let tpl = c.tree.nodeTemplate || "{tech} (T{tier})";
+        return tpl.replace("{tech}", n.name).replace("{tier}", String(n.tier));
+      };
+      const dir = c.tree.direction || "down";
+
+      const walk = (nodes, depth) => {
+        for (const n of nodes) {
+          if (lines.length >= c.tree.maxLines) return;
+          lines.push(prefix(depth) + nodeText(n));
+          walk(n.children, depth + 1);
+          if (lines.length >= c.tree.maxLines) return;
+        }
+      };
+
+      if (dir === "up" || dir === "both") {
+        if (lines.length < c.tree.maxLines) lines.push(prefix(1) + "量子场论 (T2)");
+        if (lines.length < c.tree.maxLines) lines.push(prefix(1) + "暗物质探测 (T2)");
+      }
+      if (dir === "down" || dir === "both") {
+        walk(SAMPLE.tree, dir === "both" ? 2 : 1);
+      }
+      if (lines.length >= c.tree.maxLines) lines.push("   " + (c.tree.truncateText || "…还有未显示的解锁项"));
+
+      const name = dir === "up" ? "（前置链）" : dir === "both" ? "（上下游）" : "";
+      out.push(`<div class="tree-title">${esc(c.tree.title || "科技树:")}${name}</div>`);
+      out.push(`<pre>${esc(lines.join("\n"))}</pre>`);
+    }
+  }
+
+  if (out.length === 1) {
+    out.push(`<div class="empty">当前配置下这条科技不会生成任何附加内容</div>`);
+  }
+
+  $("preview").innerHTML = out.join("");
+}
+
+let browseTargetId = null;
+let browseCurrent = "";
+
+async function openBrowser(targetId) {
+  browseTargetId = targetId;
+  const start = $(targetId).value.trim();
+  $("modal").classList.add("show");
+  await loadDir(start || null);
+}
+
+async function loadDir(path) {
+  try {
+    const d = await api("/api/browse" + (path ? "?path=" + encodeURIComponent(path) : ""));
+    browseCurrent = d.path || "";
+    $("modalPath").textContent = browseCurrent || "（选择驱动器）";
+    $("btnUp").disabled = !d.parent && !browseCurrent;
+
+    const list = $("modalList");
+    list.innerHTML = "";
+
+    if (d.roots && d.roots.length) {
+      for (const r of d.roots) {
+        const div = document.createElement("div");
+        div.className = "dir-item";
+        div.innerHTML = `<span class="ico">💽</span>${esc(r)}`;
+        div.onclick = () => loadDir(r);
+        list.appendChild(div);
+      }
+      return;
+    }
+
+    if (!d.dirs.length) {
+      list.innerHTML = '<div class="dir-item dim">（此目录下没有子文件夹，可直接点「选择此文件夹」）</div>';
+      return;
+    }
+
+    for (const item of d.dirs) {
+      const div = document.createElement("div");
+      div.className = "dir-item";
+      div.innerHTML = `<span class="ico">📁</span>${esc(item.name)}`;
+      div.onclick = () => loadDir(item.path);
+      list.appendChild(div);
+    }
+  } catch (e) {
+    $("modalList").innerHTML = `<div class="dir-item dim">读取失败：${esc(e.message)}</div>`;
+  }
+}
+
+function closeBrowser() { $("modal").classList.remove("show"); browseTargetId = null; }
+
+$("btnUp").onclick = async () => {
+  try {
+    const d = await api("/api/browse?path=" + encodeURIComponent(browseCurrent));
+    if (d.parent) loadDir(d.parent); else loadDir(null);
+  } catch (e) { log("上级目录读取失败：" + e.message, "err"); }
+};
+$("btnCancel").onclick = closeBrowser;
+$("btnPick").onclick = () => {
+  if (browseTargetId && browseCurrent) {
+    $(browseTargetId).value = browseCurrent;
+    renderPreview();
+  }
+  closeBrowser();
+};
+$("modal").onclick = e => { if (e.target.id === "modal") closeBrowser(); };
+
+async function autoFill(which) {
+  try {
+    const s = await api("/api/suggest");
+    if (which === "game") {
+      if (s.gamePath) { $("gamePath").value = s.gamePath; log("已填入游戏目录：" + s.gamePath, "ok"); }
+      else log("未能自动找到游戏目录，请用「浏览」选择", "err");
+    } else {
+      if (s.documentPath) { $("docPath").value = s.documentPath; log("已填入文档目录：" + s.documentPath, "ok"); }
+      else log("未能确定文档目录，请用「浏览」选择", "err");
+    }
+    renderPreview();
+  } catch (e) { log("探测失败：" + e.message, "err"); }
+}
+$("btnAutoGame").onclick = () => autoFill("game");
+$("btnAutoDoc").onclick = () => autoFill("doc");
+
+let pendingPlayset = "";
+let pendingMods = { sourceMod: "", targetMod: "" };
+
+async function loadPlaysets() {
+  const doc = $("docPath").value.trim();
+  const q = doc ? "?doc=" + encodeURIComponent(doc) : "";
+  const sel = $("playset");
+  try {
+    const list = await api("/api/playsets" + q);
+    sel.innerHTML = "";
+    if (!list.length) {
+      const o = document.createElement("option");
+      o.value = "";
+      o.textContent = "（没有可用的播放集 — 请先填写用户数据目录）";
+      sel.appendChild(o);
+      return;
+    }
+    for (const name of list) {
+      const opt = document.createElement("option");
+      opt.value = opt.textContent = name;
+      sel.appendChild(opt);
+    }
+    if (pendingPlayset && list.includes(pendingPlayset)) sel.value = pendingPlayset;
+    pendingPlayset = "";
+    await loadMods();
+  } catch (e) {
+    sel.innerHTML = '<option value="">（读取失败）</option>';
+    log("读取播放集失败（启动器数据库可能被占用）：" + e.message, "err");
+  }
+}
+
+async function loadMods() {
+  const playset = $("playset").value;
+  if (!playset) return;
+  const doc = $("docPath").value.trim();
+  const q = `?playset=${encodeURIComponent(playset)}${doc ? "&doc=" + encodeURIComponent(doc) : ""}`;
+  try {
+    const list = await api("/api/mods" + q);
+    const src = $("sourceMod");
+    const tgt = $("targetMod");
+    src.innerHTML = '<option value="">（全部 MOD）</option>';
+    tgt.innerHTML = '<option value="">（不指定，输出到目录）</option>';
+    for (const name of list) {
+      const o1 = document.createElement("option");
+      o1.value = o1.textContent = name;
+      src.appendChild(o1);
+      const o2 = document.createElement("option");
+      o2.value = o2.textContent = name;
+      tgt.appendChild(o2);
+    }
+    src.value = list.includes(pendingMods.sourceMod) ? pendingMods.sourceMod : "";
+    tgt.value = list.includes(pendingMods.targetMod) ? pendingMods.targetMod : "";
+    pendingMods = { sourceMod: "", targetMod: "" };
+    syncTargetControls();
+  } catch (e) { log("读取模组列表失败：" + e.message, "err"); }
+}
+
+function toggleMode() {
+  const playsetMode = $("mode").value === "playset";
+  $("sourceMod").disabled = !playsetMode;
+  $("sourceMod").style.opacity = playsetMode ? "" : ".45";
+  // 原版模式下必须包含原版科技；播放集模式下可关闭（只生成 MOD 科技）
+  $("dataIncludeVanilla").checked = playsetMode ? $("dataIncludeVanilla").checked : true;
+  $("dataIncludeVanilla").disabled = !playsetMode;
+  $("dataIncludeVanilla").style.opacity = playsetMode ? "" : ".45";
+  // 播放集与目标 MOD 在任何模式下都可用：原版数据也能指定输出 MOD
+}
+
+function syncTargetControls() {
+  const hasMod = $("targetMod").value !== "";
+  $("targetDir").disabled = hasMod;
+  $("targetDir").style.opacity = hasMod ? ".45" : "";
+}
+
+function setStatus(text, cls) {
+  const el = $("status");
+  el.textContent = text;
+  el.className = "status" + (cls ? " " + cls : "");
+}
+
+async function generate() {
+  $("btnGen").disabled = true;
+  setStatus("生成中…", "running");
+  try {
+    await saveConfig();
+    log("开始生成…");
+    await api("/api/generate", {method: "POST"});
+    pollTimer = setInterval(poll, 600);
+  } catch (e) {
+    log("启动失败：" + e.message, "err");
+    $("btnGen").disabled = false;
+    setStatus("失败", "error");
+  }
+}
+
+let lastLogIndex = 0;
+async function poll() {
+  try {
+    const s = await api("/api/status");
+    for (; lastLogIndex < s.logs.length; lastLogIndex++) log(s.logs[lastLogIndex], "ok");
+    if (s.state === "done") {
+      clearInterval(pollTimer);
+      log(`完成：${s.result.fileCount} 个文件 → ${s.result.outputDirectory}`, "ok");
+      setStatus("完成", "done");
+      $("btnGen").disabled = false;
+    } else if (s.state === "error") {
+      clearInterval(pollTimer);
+      log("错误：" + s.error, "err");
+      setStatus("失败", "error");
+      $("btnGen").disabled = false;
+    }
+  } catch (e) {
+    clearInterval(pollTimer);
+    log("轮询失败：" + e.message, "err");
+    $("btnGen").disabled = false;
+  }
+}
+
+document.querySelectorAll("[data-browse]").forEach(b =>
+  b.onclick = () => openBrowser(b.dataset.browse));
+
+$("mode").addEventListener("change", () => { toggleMode(); renderPreview(); loadPlaysets(); });
+$("docPath").addEventListener("change", loadPlaysets);
+$("playset").addEventListener("change", loadMods);
+$("targetMod").addEventListener("change", syncTargetControls);
+$("btnGen").addEventListener("click", generate);
+$("btnSave").addEventListener("click", () => saveConfig().catch(e => log("保存失败：" + e.message, "err")));
+
+document.querySelectorAll("input, select").forEach(el => {
+  el.addEventListener("change", renderPreview);
+  el.addEventListener("input", renderPreview);
+});
+document.querySelectorAll(".lang").forEach(cb => cb.addEventListener("change", renderPreview));
+
+
+function syncTreeControls() {
+  const on = $("treeEnabled").checked;
+  for (const id of ["treeDirection", "treeIndent", "treeTitle", "treeIndentWidth",
+                    "maxLines", "treeNodeTemplate", "treeTruncateText", "treeColorByArea"]) {
+    const el = $(id);
+    if (!el) continue;
+    el.disabled = !on;
+    el.style.opacity = on ? "" : ".45";
+  }
+}
+$("treeEnabled").addEventListener("change", syncTreeControls);
+
+loadConfig();
+</script>
+</body>
+</html>

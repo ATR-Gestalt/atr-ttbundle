@@ -1,0 +1,100 @@
+# ATR-TTbundle 配置示例
+# 复制为 atr-ttbundle.toml（与可执行文件同目录）后按需修改。
+# 所有项都有默认值，只需写出你要改的项。
+# 命令行参数优先于本文件。
+#
+# 路径写法：Windows 用单引号字面量（'D:\Games\Stellaris'）避免反斜杠转义；
+#           Linux / macOS 用 '/home/user/.local/share/Paradox Interactive/Stellaris'。
+
+# ---------------- 路径 ----------------
+[game]
+# 游戏安装目录
+game_path = 'D:\SteamLibrary\steamapps\common\Stellaris'
+# 群星用户数据目录（模组文件夹的上一级）
+document_path = 'C:\Users\你\Documents\Paradox Interactive\Stellaris'
+
+# 数据来源与输出目标已经拆开：
+#   [data].mode / playset / source_mod 决定「解析哪些科技」
+#   [output].target_mod / target_dir   决定「写到哪里」
+
+# ---------------- 输出 ----------------
+[output]
+# 文件名前缀。zz 前缀让文件在加载顺序里靠后，覆盖优先级最高
+file_prefix = "zz_techtree"
+# 输出目标：target_mod 非空 = 写入播放集里该 MOD 的 localisation/
+#           target_mod 为空 = 写入 target_dir 目录
+target_mod = ""
+target_dir = 'C:\Users\你\Documents\Paradox Interactive\Stellaris\mod\TechnologyTree'
+# 注意：生成前会清空目标整个 localisation/ 目录
+# 要生成的语言；留空数组 [] 表示全部 10 种
+languages = ["simp_chinese", "english"]
+# 是否输出辅助片段文件（!<prefix>_<lang>.yml，含标题文案）
+write_fragments = true
+
+# ---------------- 数据范围 ----------------
+[data]
+# vanilla = 只解析原版；playset = 原版 + 播放集里所有 MOD
+mode = "vanilla"
+# 播放集名（mode = playset 时必填；指定 target_mod 时也用它定位 MOD）
+playset = ""
+# 数据来源 MOD（展示名）；空 = 播放集全部 MOD（仅 mode = playset 时生效）
+source_mod = ""
+# 是否把原版科技也纳入生成；false = 只生成 MOD 科技（仅 mode = playset 时生效）
+include_vanilla = true
+# 排除事件科技（按 tech_event_ 前缀启发式识别；原版目前没有此类科技）
+exclude_event_techs = false
+# 排除「网关科技」（gateway = xxx，科技树分支节点）
+# 两个主流科技树 MOD 都覆盖了网关科技，默认不排除
+exclude_gateway_techs = false
+# 排除起始科技（start_tech = yes）
+exclude_start_techs = false
+
+# ---------------- 段落顺序 ----------------
+# 标签行固定在首行，不参与排序。
+# 可选值：requires（前置）/ unlocks（解锁）/ tree（科技树）
+# 删掉谁就关掉谁。
+[sections]
+order = ["requires", "unlocks", "tree"]
+
+# ---------------- 标签行 ----------------
+[labels]
+enabled = true          # 整行开关；关掉后只剩正文段落
+area_icon = true        # £physics£ £society£ £engineering£
+area_name = true        # $PHYSICS$ $SOCIETY$ $ENGINEERING$
+tier = true             # T1 / T2 …
+tier_zero = "T0"        # tier = 0（起始科技）显示成什么；填空则不显示层级
+category = true         # ($computing$) 形式
+rare = true             # $TECH_IS_RARE$
+dangerous = true        # $TECH_IS_DANGEROUS$
+repeatable = true       # 可重复科技标记
+cost = false            # 研究成本数值
+color = true            # 整行用 §Y…§! 包裹
+delimiter = " "         # 各标签之间的分隔符，例如改成 " | "
+
+# ---------------- 前置 / 解锁列表 ----------------
+[lists]
+enabled = true
+# 留空（不写）则沿用游戏内建的多语言片段，写了就统一用这里的文本
+# requires_title = "£research£ §H需要下列科技§!"
+# unlocks_title = "£research£ §H解锁下列科技§!"
+# one_of_title = "§H需要以下之一§!"
+max_items = 10                 # 超过就截断
+truncate_text = "…还有 {n} 项"
+show_area_icon = true          # 每个列表项前带领域图标
+
+# ---------------- 科技树 ----------------
+[tree]
+enabled = true
+# down = 只画它能解锁什么；up = 只画前置链；both = 上下游都画
+direction = "down"
+title = "科技树:"
+# ascii = |-- 缩进（已确认游戏字体支持）
+# unicode = ├─ └─（更好看，但字体兼容性未验证）
+indent_style = "ascii"
+indent_width = 3
+max_lines = 100
+truncate_text = "…还有未显示的解锁项"
+# {tech} = ['technology:xxx'] 概念引用（名字自动跟随翻译）
+# {tier} = 层级数字；{icon} = 领域图标
+node_template = "{tech} (T{tier})"
+color_by_area = false          # 按领域给节点上色（物理蓝/社会绿/工程橙）

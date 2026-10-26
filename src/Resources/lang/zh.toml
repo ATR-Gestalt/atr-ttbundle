@@ -1,0 +1,76 @@
+# Interactive prompts
+[prompt]
+search_placeholder_text = "（输入以搜索）"
+more_choices_text = "（上下移动以显示更多选项）"
+generate_new_config = "将会生成新配置文件……"
+welcome = "欢迎使用[gold1]群星科技关联生成器[/]！"
+read_instructions = "请仔细[cyan]阅读说明[/]！"
+pause = "请按[cyan]回车键[/]继续……"
+ask_game_path = "[white]你的[cyan]游戏路径[/]是？[/]"
+ask_document_path = "[white]你的[cyan]文档路径[/]是？[/]"
+config_created = "[green]配置文件创建成功！[/]"
+close_launcher = "在继续之前，请[cyan]关闭启动器[/]"
+
+# {1} = output path — {0} (playset name) intentionally unused
+confirm_use_saved_vanilla = "是否使用[yellow]原版游戏[/]与输出路径 [yellow]{1}[/]？"
+# {0} = playset name, {1} = target mod name
+confirm_use_saved_target = "是否使用已保存的播放集 [yellow]{0}[/] 与目标模组 [yellow]{1}[/]？"
+choose_playset = "选择目标播放集（按 [cyan]Esc[/] 使用原版游戏）"
+current_playset_prefix = "[green]（当前）[/] "
+ask_output_path = "生成文件的输出路径？"
+choose_target_mod = "选择目标模组以输出生成文件"
+target_mod_collision_header = "以下是这些模组的路径："
+# {0} = mod file path
+target_mod_collision_item = "  - {0}"
+
+# {1} = output path — {0} (playset name) intentionally unused
+confirm_save_vanilla = "是否保存选择？（[yellow]原版游戏[/]，输出路径：[yellow]{1}[/]）"
+# {0} = playset name, {1} = target mod name
+confirm_save_target = "是否保存选择？（播放集：[yellow]{0}[/]，目标模组：[yellow]{1}[/]）"
+
+# {0} = file count, {1} = output directory
+saved_l10n = "已将 [cyan]{0}[/] 个本地化文件写入到 [grey underline]{1}[/]"
+# {0} = relation count, {1} = tech count
+generation_summary = "[green]成功为 [cyan]{1}[/] 个科技生成 [cyan]{0}[/] 条关联条目！[/]"
+
+
+# Progress bar task descriptions
+[progress]
+connecting_launcher_db = "正在连接启动器数据库"
+loading_game = "正在加载游戏（CWTools）"
+loading_scripted_variables = "正在加载脚本变量"
+loading_authority_suffixes = "正在加载政体后缀"
+loading_technologies = "正在加载科技"
+building_tech_relationship = "正在构建科技关系"
+loading_l10n = "正在加载本地化"
+generating_l10n = "正在生成本地化"
+writing_l10n_fragments = "正在写入本地化片段"
+writing_l10n = "正在写入本地化"
+
+
+# Data processing warnings
+[data]
+# {0} = tech key
+tech_no_category = "科技 {0} 没有子领域"
+# {0} = tech key
+l10n_entry_not_found = "未找到科技 {0} 的本地化条目"
+# {0} = tech key, {1} = swap key
+l10n_entry_and_swap_not_found = "未找到科技 {0} 与其替换科技 {1} 的本地化条目"
+# {0} = tech key, {1} = unknown prereq key
+tech_unknown_prereq = "科技 {0} 有未知的前置科技：{1}"
+# {0} = tech key
+tech_unnamed_swap = "科技 {0} 有未命名的替换科技，已跳过"
+# {0} = loc key with circular reference
+l10n_cycle_reference = "本地化键 \"{0}\" 中存在循环引用，已跳过解析以避免无限循环"
+
+
+
+
+# Error messages
+[error]
+config_parse_failed = "配置文件解析失败："
+playset_not_found = "未找到播放集！"
+target_mod_not_found = "未找到目标模组！"
+multiple_mods_same_name = "检测到多个同名模组"
+# {0} = output directory path
+failed_to_access_output_dir = "无法访问输出目录：{0}"

@@ -7,6 +7,17 @@
 - 单文件、免安装，**玩家不需要装 .NET 运行时**
 - 带图形界面（浏览器操作），也支持命令行
 
+## 下载
+
+预编译版本见 [Releases](https://github.com/ATR-Gestalt/atr-ttbundle/releases)：
+
+| 平台 | 下载 | 使用 |
+|---|---|---|
+| Windows x64 | `atr-ttbundle-win-x64.zip` | 解压后双击 `一键启动.bat` |
+| Linux x64 | `atr-ttbundle-linux-x64.zip` | 解压后运行 `./start.sh` |
+
+附件 `SHA256SUMS.txt` 可用于校验下载文件完整性；`atr-ttbundle.example.toml` 是配置示例。
+
 ## 快速开始
 
 ### 方式一：图形界面（推荐）

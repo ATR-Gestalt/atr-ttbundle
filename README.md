@@ -16,7 +16,10 @@
 | Windows x64 | `atr-ttbundle-win-x64.zip` | 解压后双击 `一键启动.bat` |
 | Linux x64 | `atr-ttbundle-linux-x64.zip` | 解压后运行 `./start.sh` |
 
-附件 `SHA256SUMS.txt` 可用于校验下载文件完整性；`atr-ttbundle.example.toml` 是配置示例。
+附件 `SHA256SUMS.txt` 是各下载文件的**完整性校验值**（SHA-256）：下载后可用
+`sha256sum -c SHA256SUMS.txt`（Linux/macOS）或 `Get-FileHash`（Windows）
+核对压缩包是否完整、有没有下载坏；不核对也不影响使用。
+`atr-ttbundle.example.toml` 是配置示例。
 
 ## 快速开始
 

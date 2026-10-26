@@ -416,9 +416,16 @@ internal static class UiServer {
 
 		if (root.TryGetProperty("lists", out JsonElement lists)) {
 			config.Lists.Enabled = Bool(lists, "enabled") ?? config.Lists.Enabled;
-			config.Lists.RequiresTitle = Str(lists, "requiresTitle");
-			config.Lists.UnlocksTitle = Str(lists, "unlocksTitle");
-			config.Lists.OneOfTitle = Str(lists, "oneOfTitle");
+			// 空串表示「用内置标题」；写 null 让生成时回退到 $techrel_*$ 片段
+			config.Lists.RequiresTitle = Str(lists, "requiresTitle") is { Length: > 0 } rt
+				? rt
+				: null;
+			config.Lists.UnlocksTitle = Str(lists, "unlocksTitle") is { Length: > 0 } ut
+				? ut
+				: null;
+			config.Lists.OneOfTitle = Str(lists, "oneOfTitle") is { Length: > 0 } ot
+				? ot
+				: null;
 			config.Lists.MaxItems = Int(lists, "maxItems") ?? config.Lists.MaxItems;
 			config.Lists.TruncateText = Str(lists, "truncateText") ?? config.Lists.TruncateText;
 			config.Lists.ShowAreaIcon = Bool(lists, "showAreaIcon") ?? config.Lists.ShowAreaIcon;
@@ -432,6 +439,7 @@ internal static class UiServer {
 				Bool(advanced, "suppressesCwtoolsErrors") ?? config.SuppressesCWToolsErrors;
 		}
 
+		config.Normalize();
 		config.Save();
 	}
 

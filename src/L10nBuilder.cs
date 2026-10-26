@@ -81,7 +81,9 @@ internal sealed class L10nBuilder(GameData gameData, Config config) {
 		}
 
 		StringBuilder sb = new();
-		sb.Append(config.Lists.RequiresTitle ?? Constants.L10n.Requires);
+		sb.Append(string.IsNullOrEmpty(config.Lists.RequiresTitle)
+			? Constants.L10n.Requires
+			: config.Lists.RequiresTitle);
 
 		int written = 0;
 		foreach (TechRequirement require in tech.Requires) {
@@ -97,7 +99,9 @@ internal sealed class L10nBuilder(GameData gameData, Config config) {
 			} else if (require is TechRequirementAlternatives alternatives) {
 				sb.Append("\n$t$")
 					.Append(Constants.L10n.Bullet)
-					.Append(config.Lists.OneOfTitle ?? Constants.L10n.OneOf);
+					.Append(string.IsNullOrEmpty(config.Lists.OneOfTitle)
+						? Constants.L10n.OneOf
+						: config.Lists.OneOfTitle);
 
 				foreach (string alternative in alternatives.Alternatives) {
 					if (written >= config.Lists.MaxItems) {
@@ -123,7 +127,9 @@ internal sealed class L10nBuilder(GameData gameData, Config config) {
 		}
 
 		StringBuilder sb = new();
-		sb.Append(config.Lists.UnlocksTitle ?? Constants.L10n.Unlocks);
+		sb.Append(string.IsNullOrEmpty(config.Lists.UnlocksTitle)
+			? Constants.L10n.Unlocks
+			: config.Lists.UnlocksTitle);
 
 		int written = 0;
 		foreach (string unlock in tech.Unlocks) {

@@ -63,7 +63,9 @@ public static class Program {
 			Environment.Exit(0);
 			throw new UnreachableException();
 		} else {
-			return arguments.ToConfig();
+			Config config = arguments.ToConfig();
+			config.Normalize();
+			return config;
 		}
 	}
 

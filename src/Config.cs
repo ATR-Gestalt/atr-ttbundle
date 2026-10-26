@@ -156,10 +156,68 @@ internal sealed partial class Config {
 	public ListsConfig Lists { get; set; } = new();
 
 
+	/// <summary>
+	/// 把空值/非法值统一回退到默认，避免生成输出异常（空文件名前缀、树方向为空、
+	/// 节点模板为空、列表标题/分隔符为空、条数与行数上限为 0 等）。
+	/// 在读取 toml 与 UI 保存配置后调用。
+	/// </summary>
+	internal void Normalize() {
+		// [output]
+		if (string.IsNullOrWhiteSpace(Output.FilePrefix)) {
+			Output.FilePrefix = "zz_techtree";
+		}
+
+		// [tree]
+		if (string.IsNullOrWhiteSpace(Tree.Direction)) {
+			Tree.Direction = "down";
+		}
+
+		if (string.IsNullOrWhiteSpace(Tree.Title)) {
+			Tree.Title = "科技树:";
+		}
+
+		if (Tree.IndentWidth <= 0) {
+			Tree.IndentWidth = 3;
+		}
+
+		if (Tree.MaxLines <= 0) {
+			Tree.MaxLines = 100;
+		}
+
+		if (string.IsNullOrWhiteSpace(Tree.TruncateText)) {
+			Tree.TruncateText = "…还有未显示的解锁项";
+		}
+
+		if (string.IsNullOrWhiteSpace(Tree.NodeTemplate)) {
+			Tree.NodeTemplate = "{tech} (T{tier})";
+		}
+
+		// [labels]：分隔符为空会让标签粘连，回退成单个空格
+		if (string.IsNullOrEmpty(Labels.Delimiter)) {
+			Labels.Delimiter = " ";
+		}
+
+		// [lists]
+		if (Lists.MaxItems <= 0) {
+			Lists.MaxItems = 10;
+		}
+
+		if (string.IsNullOrWhiteSpace(Lists.TruncateText)) {
+			Lists.TruncateText = "…还有 {n} 项";
+		}
+
+		// [data]
+		if (string.IsNullOrWhiteSpace(Data.Mode)) {
+			Data.Mode = "vanilla";
+		}
+	}
+
 	internal static Config? Load() {
 		try {
 			using FileStream file = File.OpenRead(Constants.ConfigPath);
-			return TomlSerializer.Deserialize(file, TomlContext.Default.Config)!;
+			Config config = TomlSerializer.Deserialize(file, TomlContext.Default.Config)!;
+			config.Normalize();
+			return config;
 		} catch (FileNotFoundException) {
 			return null;
 		} catch (TomlException e) {

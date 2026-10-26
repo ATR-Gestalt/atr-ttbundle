@@ -273,6 +273,8 @@ internal static class UiServer {
 			indentWidth = config.Tree.IndentWidth,
 			maxLines = config.Tree.MaxLines,
 			title = config.Tree.Title,
+			upTitle = config.Tree.UpTitle,
+			downTitle = config.Tree.DownTitle,
 			truncateText = config.Tree.TruncateText,
 			nodeTemplate = config.Tree.NodeTemplate,
 			colorByArea = config.Tree.ColorByArea,
@@ -390,6 +392,8 @@ internal static class UiServer {
 			config.Tree.IndentWidth = Int(tree, "indentWidth") ?? config.Tree.IndentWidth;
 			config.Tree.MaxLines = Int(tree, "maxLines") ?? config.Tree.MaxLines;
 			config.Tree.Title = Str(tree, "title") ?? config.Tree.Title;
+			config.Tree.UpTitle = Str(tree, "upTitle") ?? config.Tree.UpTitle;
+			config.Tree.DownTitle = Str(tree, "downTitle") ?? config.Tree.DownTitle;
 			config.Tree.TruncateText = Str(tree, "truncateText") ?? config.Tree.TruncateText;
 			config.Tree.NodeTemplate = Str(tree, "nodeTemplate") ?? config.Tree.NodeTemplate;
 			config.Tree.ColorByArea = Bool(tree, "colorByArea") ?? config.Tree.ColorByArea;

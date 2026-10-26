@@ -15,6 +15,12 @@ internal sealed class TreeConfig {
 
 	public string Title { get; set; } = "科技树:";
 
+	/// <summary>both 方向时的前置段标题。</summary>
+	public string UpTitle { get; set; } = "[前置]";
+
+	/// <summary>both 方向时的解锁段标题。</summary>
+	public string DownTitle { get; set; } = "[解锁]";
+
 	/// <summary>ascii（|--）或 unicode（├─ └─）。</summary>
 	public string IndentStyle { get; set; } = "ascii";
 
@@ -58,31 +64,54 @@ internal static class TreeRenderer {
 			return string.Empty;
 		}
 
-		List<string> lines = [];
-		bool truncated = false;
-
 		bool up = direction is "up" or "both";
 		bool down = direction is "down" or "both";
 
+		List<string> upLines = [];
+		bool upTruncated = false;
 		if (up) {
-			RenderUp(root, table, cfg, lines, 1, ref truncated);
+			RenderUp(root, table, cfg, upLines, 1, ref upTruncated);
 		}
 
+		List<string> downLines = [];
+		bool downTruncated = false;
 		if (down) {
-			RenderDown(rootId, root, table, cfg, lines, 1, ref truncated);
+			RenderDown(rootId, root, table, cfg, downLines, 1, ref downTruncated);
 		}
 
-		if (lines.Count == 0) {
+		if (upLines.Count == 0 && downLines.Count == 0) {
 			return string.Empty;
 		}
 
 		StringBuilder sb = new();
-		for (int i = 0; i < lines.Count; i++) {
-			if (i > 0) {
-				sb.Append('\n');
+		if (up && down) {
+			// both：拆成「前置段」「解锁段」两棵树，各自带分段标题
+			if (upLines.Count > 0) {
+				sb.Append(cfg.UpTitle);
+				foreach (string line in upLines) {
+					sb.Append('\n').Append(line);
+				}
 			}
 
-			sb.Append(lines[i]);
+			if (downLines.Count > 0) {
+				if (sb.Length > 0) {
+					sb.Append("\n\n");
+				}
+
+				sb.Append(cfg.DownTitle);
+				foreach (string line in downLines) {
+					sb.Append('\n').Append(line);
+				}
+			}
+		} else {
+			List<string> lines = up ? upLines : downLines;
+			for (int i = 0; i < lines.Count; i++) {
+				if (i > 0) {
+					sb.Append('\n');
+				}
+
+				sb.Append(lines[i]);
+			}
 		}
 
 		return sb.ToString();

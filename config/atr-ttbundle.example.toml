@@ -88,6 +88,9 @@ enabled = true
 # down = 只画它能解锁什么；up = 只画前置链；both = 上下游都画
 direction = "down"
 title = "科技树:"
+# both 方向时，上下游拆成两段，各自的小标题
+up_title = "[前置]"
+down_title = "[解锁]"
 # ascii = |-- 缩进（已确认游戏字体支持）
 # unicode = ├─ └─（更好看，但字体兼容性未验证）
 indent_style = "ascii"

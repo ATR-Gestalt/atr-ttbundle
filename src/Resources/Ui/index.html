@@ -433,6 +433,10 @@
         <div><label class="fl">缩进宽度</label><input id="treeIndentWidth" type="text" value="3"></div>
       </div>
       <div class="row" style="margin-top:6px">
+        <div><label class="fl">前置段标题（both）</label><input id="treeUpTitle" type="text" value="[前置]"></div>
+        <div><label class="fl">解锁段标题（both）</label><input id="treeDownTitle" type="text" value="[解锁]"></div>
+      </div>
+      <div class="row" style="margin-top:6px">
         <div><label class="fl">树行数上限</label><input id="maxLines" type="text" value="100"></div>
       </div>
       <div class="row" style="margin-top:6px">
@@ -571,7 +575,24 @@ const SAMPLE = {
     { name: "量子纠缠通讯", tier: 4, area: "physics" },
     { name: "时空折叠引擎", tier: 5, area: "engineering" }
   ],
-  tree: [
+  // 上游：多个前置，每个前置再带子前置（演示多分支前置链）
+  upTree: [
+    { name: "量子场论", tier: 2, children: [
+      { name: "经典场论", tier: 1, children: [] },
+      { name: "重整化理论", tier: 1, children: [] }
+    ]},
+    { name: "暗物质探测", tier: 2, children: [
+      { name: "引力波观测", tier: 1, children: [] }
+    ]},
+    { name: "零点能源", tier: 2, children: [
+      { name: "真空涨落", tier: 1, children: [] }
+    ]},
+    { name: "真空衰变理论", tier: 2, children: [
+      { name: "隧穿效应", tier: 1, children: [] }
+    ]}
+  ],
+  // 下游：它能解锁的科技
+  downTree: [
     { name: "现实编辑器", tier: 4, area: "physics", children: [
       { name: "局部现实重写", tier: 5, area: "physics", children: [
         { name: "宇宙微调", tier: 5, area: "physics", children: [] }
@@ -644,6 +665,8 @@ function collectConfig() {
       indentWidth: parseInt($("treeIndentWidth").value, 10) || 3,
       maxLines: parseInt($("maxLines").value, 10) || 100,
       title: $("treeTitle").value,
+      upTitle: $("treeUpTitle").value,
+      downTitle: $("treeDownTitle").value,
       truncateText: $("treeTruncateText").value,
       nodeTemplate: $("treeNodeTemplate").value,
       colorByArea: $("treeColorByArea").checked
@@ -695,6 +718,8 @@ async function loadConfig() {
     $("treeIndentWidth").value = t.indentWidth || 3;
     $("maxLines").value = t.maxLines || 100;
     $("treeTitle").value = t.title !== undefined ? t.title : "科技树:";
+    $("treeUpTitle").value = t.upTitle !== undefined ? t.upTitle : "[前置]";
+    $("treeDownTitle").value = t.downTitle !== undefined ? t.downTitle : "[解锁]";
     $("treeTruncateText").value = t.truncateText !== undefined ? t.truncateText : "…还有未显示的解锁项";
     $("treeNodeTemplate").value = t.nodeTemplate !== undefined ? t.nodeTemplate : "{tech} (T{tier})";
     $("treeColorByArea").checked = !!t.colorByArea;
@@ -821,9 +846,8 @@ function renderPreview() {
       if (SAMPLE.unlocks.length > c.lists.maxItems) out.push(trunc(SAMPLE.unlocks.length - c.lists.maxItems));
     }
     if (sec === "tree" && c.tree.enabled) {
-      const dir0 = c.tree.direction || "down";
-      if (dir0 === "none") continue;
-      const lines = [];
+      const dir = c.tree.direction || "down";
+      if (dir === "none") continue;
       const unicode = c.tree.indent === "unicode";
       const w = Math.max(1, c.tree.indentWidth || 3);
       const unit = (unicode ? "│" : "|") + " ".repeat(w);
@@ -832,29 +856,50 @@ function renderPreview() {
         let tpl = c.tree.nodeTemplate || "{tech} (T{tier})";
         return tpl.replace("{tech}", n.name).replace("{tier}", String(n.tier));
       };
-      const dir = c.tree.direction || "down";
 
-      const walk = (nodes, depth) => {
-        for (const n of nodes) {
-          if (lines.length >= c.tree.maxLines) return;
-          lines.push(prefix(depth) + nodeText(n));
-          walk(n.children, depth + 1);
-          if (lines.length >= c.tree.maxLines) return;
-        }
+      // 单棵树渲染，各自独立受 maxLines 限制（与后端双树逻辑一致）
+      const renderTree = (nodes) => {
+        const lines = [];
+        let truncated = false;
+        const walk = (list, depth) => {
+          for (const n of list) {
+            if (truncated) return;
+            if (lines.length >= c.tree.maxLines) {
+              lines.push("   " + (c.tree.truncateText || "…还有未显示的解锁项"));
+              truncated = true;
+              return;
+            }
+            lines.push(prefix(depth) + nodeText(n));
+            walk(n.children || [], depth + 1);
+          }
+        };
+        walk(nodes, 1);
+        return lines;
       };
 
-      if (dir === "up" || dir === "both") {
-        if (lines.length < c.tree.maxLines) lines.push(prefix(1) + "量子场论 (T2)");
-        if (lines.length < c.tree.maxLines) lines.push(prefix(1) + "暗物质探测 (T2)");
+      const wantUp = dir === "up" || dir === "both";
+      const wantDown = dir === "down" || dir === "both";
+      const upLines = wantUp ? renderTree(SAMPLE.upTree) : [];
+      const downLines = wantDown ? renderTree(SAMPLE.downTree) : [];
+      const outLines = [];
+      if (wantUp && wantDown) {
+        // both：拆成「前置段」「解锁段」两棵树
+        if (upLines.length) {
+          outLines.push(c.tree.upTitle || "[前置]");
+          outLines.push(...upLines);
+        }
+        if (downLines.length) {
+          if (outLines.length) outLines.push("");
+          outLines.push(c.tree.downTitle || "[解锁]");
+          outLines.push(...downLines);
+        }
+      } else {
+        outLines.push(...(wantUp ? upLines : downLines));
       }
-      if (dir === "down" || dir === "both") {
-        walk(SAMPLE.tree, dir === "both" ? 2 : 1);
-      }
-      if (lines.length >= c.tree.maxLines) lines.push("   " + (c.tree.truncateText || "…还有未显示的解锁项"));
 
       const name = dir === "up" ? "（前置链）" : dir === "both" ? "（上下游）" : "";
       out.push(`<div class="tree-title">${esc(c.tree.title || "科技树:")}${name}</div>`);
-      out.push(`<pre>${esc(lines.join("\n"))}</pre>`);
+      out.push(`<pre>${esc(outLines.join("\n"))}</pre>`);
     }
   }
 
@@ -1085,6 +1130,7 @@ document.querySelectorAll(".lang").forEach(cb => cb.addEventListener("change", r
 function syncTreeControls() {
   const on = $("treeEnabled").checked;
   for (const id of ["treeDirection", "treeIndent", "treeTitle", "treeIndentWidth",
+                    "treeUpTitle", "treeDownTitle",
                     "maxLines", "treeNodeTemplate", "treeTruncateText", "treeColorByArea"]) {
     const el = $(id);
     if (!el) continue;

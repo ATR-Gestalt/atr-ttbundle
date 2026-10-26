@@ -1,3 +1,5 @@
+using System.Text;
+
 using Tomlyn;
 using Tomlyn.Serialization;
 
@@ -157,6 +159,20 @@ internal sealed partial class Config {
 
 
 	/// <summary>
+	/// 读取配置文本：优先 UTF-8；用户用 GBK/ANSI 编辑器保存过时回退到 GBK，
+	/// 避免启动时抛 DecoderFallbackException 直接崩溃。
+	/// </summary>
+	private static string ReadConfigText(string path) {
+		byte[] bytes = File.ReadAllBytes(path);
+		try {
+			return new UTF8Encoding(false, true).GetString(bytes);
+		} catch (DecoderFallbackException) {
+			LogWarning("配置文件不是 UTF-8 编码，已按 GBK 读取；建议另存为 UTF-8。");
+			return Encoding.GetEncoding(936).GetString(bytes);
+		}
+	}
+
+	/// <summary>
 	/// 把空值/非法值统一回退到默认，避免生成输出异常（空文件名前缀、树方向为空、
 	/// 节点模板为空、列表标题/分隔符为空、条数与行数上限为 0 等）。
 	/// 在读取 toml 与 UI 保存配置后调用。
@@ -190,6 +206,14 @@ internal sealed partial class Config {
 
 		if (string.IsNullOrWhiteSpace(Tree.NodeTemplate)) {
 			Tree.NodeTemplate = "{tech} (T{tier})";
+		}
+
+		if (string.IsNullOrWhiteSpace(Tree.UpTitle)) {
+			Tree.UpTitle = "[前置]";
+		}
+
+		if (string.IsNullOrWhiteSpace(Tree.DownTitle)) {
+			Tree.DownTitle = "[解锁]";
 		}
 
 		// [labels]：分隔符为空会让标签粘连，回退成单个空格
@@ -229,8 +253,9 @@ internal sealed partial class Config {
 
 	internal static Config? Load() {
 		try {
-			using FileStream file = File.OpenRead(Constants.ConfigPath);
-			Config config = TomlSerializer.Deserialize(file, TomlContext.Default.Config)!;
+			string text = ReadConfigText(Constants.ConfigPath);
+			using StringReader reader = new(text);
+			Config config = TomlSerializer.Deserialize(reader, TomlContext.Default.Config)!;
 			config.Normalize();
 			return config;
 		} catch (FileNotFoundException) {

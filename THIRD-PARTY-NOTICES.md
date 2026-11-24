@@ -53,9 +53,11 @@ ATR-TTbundle 自身代码以 MIT 许可证发布（见 [LICENSE](LICENSE)）。
 | ZString | 2.6.0 | MIT | https://github.com/Cysharp/ZString |
 
 > CWTools 2.39.0 及其配套的 `Shared`、`CSharpHelpers`、`KTrie` 不来自 NuGet
-> （NuGet 上最高只有 0.6.0-alpha），而是取自 VS Code 扩展
-> `foreverskywalker.foreverskywalker-stellaris-cwtools` 自带的私有构建。
-> 它们同属 CWTools 项目，许可证仍为 MIT。
+> （NuGet 上最高只有 0.6.0-alpha），而是以 vendoring 方式随本仓库放在
+> `vendor/cwtools-2.39.0/`。其程序集取自 VS Code 扩展
+> `foreverskywalker.foreverskywalker-stellaris-cwtools`（2.39.0）的私有构建。
+> 它们同属 CWTools 项目，许可证仍为 MIT；许可证全文见
+> `vendor/cwtools-2.39.0/LICENSE.cwtools.txt`，该文件亦随 `dist/` 一起分发。
 
 此外，自包含发布中还包含 **.NET 10 运行时**（`Microsoft.NETCore.App`），
 其许可为 MIT，版权归 .NET Foundation 与 Microsoft 贡献者所有。

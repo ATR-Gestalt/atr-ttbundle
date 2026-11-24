@@ -109,14 +109,10 @@
 
 需要 .NET SDK 10。本仓库自带一份在 `toolchain/dotnet/`（免安装、不污染系统）。
 
-**还需要一份 CWTools 2.39.0**：它不在 NuGet 上（NuGet 最高只有 0.6.0-alpha，实测不认
-Stellaris 4.x 的 `key? =` 可选赋值，会整文件丢读巨构与 Force of Will 科技），
-因此改为引用 VS Code 扩展 `foreverskywalker.foreverskywalker-stellaris-cwtools` 自带的私有构建。
-装好该扩展即可，构建脚本默认从扩展目录取；也可以用 `-CwToolsDir` 指向一份手动拷贝：
-
-```powershell
-./scripts/build.ps1 -CwToolsDir "D:\somewhere\cwtools-2.39.0"
-```
+**CWTools 2.39.0 已随仓库提供**，放在 `vendor/cwtools-2.39.0/`，无需额外准备。
+它不在 NuGet 上（最高只有 0.6.0-alpha，实测不认 Stellaris 4.x 的 `key? =` 可选赋值，
+会整文件丢读巨构与 Force of Will 科技），因此以 vendoring 方式随源码分发。
+那段目录的来源、许可与更新方法见 `vendor/cwtools-2.39.0/README.md`。
 
 一句话构建双平台并打包 `dist/`：
 
@@ -124,6 +120,7 @@ Stellaris 4.x 的 `key? =` 可选赋值，会整文件丢读巨构与 Force of W
 ./scripts/build.ps1                  # Windows + Linux
 ./scripts/build.ps1 -Rid win-x64     # 只构建一个平台
 ./scripts/build.ps1 -KeepPdb         # 保留调试符号（默认不留）
+./scripts/build.ps1 -CwToolsDir <路径>  # 换用别的 CWTools 目录（罕见）
 ```
 
 脚本会完成「publish → 复制 README/LICENSE/配置示例/启动器 → 清理 pdb」，
@@ -136,7 +133,8 @@ Stellaris 4.x 的 `key? =` 可选赋值，会整文件丢读巨构与 Force of W
 ```
 
 > SDK 由 `scripts/dotnet-install.ps1` 安装到 `toolchain/dotnet`；换机器要重装时跑该脚本。
-> CWTools 目录默认值在 `src/atr-ttbundle.csproj` 的 `CwToolsDir` 属性里，换扩展版本号时改那一处。
+> CWTools 目录的解析优先级写在 `src/atr-ttbundle.csproj` 的 `CwToolsDir` 里：
+> 显式传入 > `vendor/cwtools-2.39.0` > 本机 VS Code 扩展目录。
 
 ## 仓库结构
 
@@ -150,6 +148,7 @@ atr-ttbundle/
 ├── scripts/
 │   ├── build.ps1             一键构建双平台并打包 dist
 │   └── dotnet-install.ps1    重新安装自带 SDK 用
+├── vendor/cwtools-2.39.0/    CWTools 程序集（vendoring，随仓库提供，含 MIT 声明）
 ├── toolchain/dotnet/         自带 .NET SDK 10（仅编译期用）
 ├── dist/                     构建产物（每个平台一个可直接分发的目录）
 └── output/target-mod/        本地试跑用的目标模组（生成结果落这里）
@@ -163,6 +162,9 @@ atr-ttbundle/
   构建脚本负责把它复制进 `dist/`，避免两处维护。
 - **`scripts/` 放自动化**：一条命令完成「编译 → 打包 → 复制文档 → 清理调试符号」，
   比手工敲 publish 更不容易漏步骤。
+- **`vendor/` 放 CWTools 程序集**：它没能通过 NuGet 拿到可用版本（详见上方编译章节），
+  所以像 `toolchain/` 一样随仓库提供。与 `toolchain/` 不同的是它体积小（约 20 MB）
+  且必须随源码分发才能复现构建，因此不排除在版本库外。
 - **`toolchain/` 自带 SDK**：这叫 vendoring（自带依赖）。好处是换机器不用装 .NET SDK、
   编译结果可复现；代价是占地 700+ MB，所以不进版本库。
 - **`output/` 只用来试跑**：工具生成时会**清空目标模组的整个 `localisation/`**，

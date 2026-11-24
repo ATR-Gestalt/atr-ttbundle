@@ -61,9 +61,83 @@
 		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
+	<!--
+		CWTools 2.39.0：改为引用 VS Code 扩展自带的私有构建。
+		原因：NuGet 上最高只有 0.6.0-alpha，实测与 0.5.0-alpha 一样不认 Stellaris 4.x
+		的 `key? =` 可选赋值语法，会整文件丢读 00_megastructures.txt 与
+		00_forceofwill_tech.txt（巨构与 Force of Will 科技全缺）。
+		2.39.0 实测可正确解析这两个文件。
+		代价：不能走 NuGet 还原，构建机必须装该扩展；分发时需把 dll 一并打包。
+	-->
+	<PropertyGroup>
+		<CwToolsDir Condition="'$(CwToolsDir)' == ''">$([System.IO.Path]::Combine($(USERPROFILE), '.vscode', 'extensions', 'foreverskywalker.foreverskywalker-stellaris-cwtools-2.39.0', 'bin', 'server', 'win-x64'))</CwToolsDir>
+	</PropertyGroup>
+
 	<ItemGroup>
-		<PackageReference Include="CWTools" Version="0.5.0-alpha" />
-		<PackageReference Include="FSharp.Core" Version="10.1.401" />
+		<Reference Include="CWTools">
+			<HintPath>$(CwToolsDir)\CWTools.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="Shared">
+			<HintPath>$(CwToolsDir)\Shared.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="CSharpHelpers">
+			<HintPath>$(CwToolsDir)\CSharpHelpers.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="FParsec">
+			<HintPath>$(CwToolsDir)\FParsec.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="FParsecCS">
+			<HintPath>$(CwToolsDir)\FParsecCS.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="FSharp.Core">
+			<HintPath>$(CwToolsDir)\FSharp.Core.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="FSharp.Data">
+			<HintPath>$(CwToolsDir)\FSharp.Data.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="FSharp.Collections.ParallelSeq">
+			<HintPath>$(CwToolsDir)\FSharp.Collections.ParallelSeq.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="FSharpx.Collections">
+			<HintPath>$(CwToolsDir)\FSharpx.Collections.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="Sandwych.QuickGraph.Core">
+			<HintPath>$(CwToolsDir)\Sandwych.QuickGraph.Core.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="DotNet.Glob">
+			<HintPath>$(CwToolsDir)\DotNet.Glob.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="VDS.Common">
+			<HintPath>$(CwToolsDir)\VDS.Common.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="FsPickler">
+			<HintPath>$(CwToolsDir)\FsPickler.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="ICSharpCode.SharpZipLib">
+			<HintPath>$(CwToolsDir)\ICSharpCode.SharpZipLib.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="KTrie">
+			<HintPath>$(CwToolsDir)\KTrie.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
+		<Reference Include="ZString">
+			<HintPath>$(CwToolsDir)\ZString.dll</HintPath>
+			<Private>true</Private>
+		</Reference>
 		<!-- HarmonyX 已移除：CWToolsHooks 改为空实现，self-contained 单文件不需要它 -->
 
 		<PackageReference Include="Tomlyn" Version="2.10.1" />

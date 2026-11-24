@@ -59,7 +59,10 @@ internal sealed class Tech(
 			);
 		}
 
-		return ((CWValue.Int) variables[fieldValue]).Item;
+		// CWTools 2.39.0 起 Value.Int 的载荷由 int 改为 long，这里窄化回 int：
+		// 科技成本/层级量级远小于 int 上限，超界属于数据异常，直接抛出而不是静默截断。
+		long value = ((CWValue.Int) variables[fieldValue]).Item;
+		return checked((int) value);
 	}
 
 	public static Tech Parse(

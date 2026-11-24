@@ -69,12 +69,14 @@ internal sealed class GameData {
 				return WorkspaceDirectoryInput.NewZD(new(
 					path,
 					Path.GetFileName(path),
-					archive.Entries
-						.Select(i => Tuple.Create(
+					// CWTools 2.39.0 起该字段由 FSharpList<Tuple<string,string>>
+					// 改为 (string, string)[]（ValueTuple 数组）。
+					[.. archive.Entries
+						.Select(i => (
 							$"{root}/{i.FullName}",
 							i.Open().ReadToString()
 						))
-						.ToFSharpList()
+					]
 				));
 			}
 
@@ -83,30 +85,31 @@ internal sealed class GameData {
 
 		Comparer = new(GameDir, ModDirs);
 
-		FSharpList<WorkspaceDirectoryInput> sourceDirs = ModDirs
-			.Prepend(WorkspaceDirectoryInput.NewWD(GameDir))
-			.ToFSharpList();
+		// CWTools 2.39.0 起 rootDirectories 由 FSharpList 改为数组
+		WorkspaceDirectoryInput[] sourceDirs = [
+			WorkspaceDirectoryInput.NewWD(GameDir),
+			..ModDirs,
+		];
 
 		// Exclude subdirs of common
-		FSharpList<string> ignoreGlobs = Directory
-			.EnumerateDirectories(
-				commonDir, "*", SearchOption.TopDirectoryOnly
-			)
-			.Select(i => Path.GetRelativePath(commonDir, i))
-			// Except for these
-			.Where(i => includedCommonSubdirs.All(
-				j => !string.Equals(
-					i, j, StringComparison.OrdinalIgnoreCase
+		string[] ignoreGlobs = [
+			.. Directory
+				.EnumerateDirectories(
+					commonDir, "*", SearchOption.TopDirectoryOnly
 				)
-			))
-			.Select(i => $"common/{i}/")
+				.Select(i => Path.GetRelativePath(commonDir, i))
+				// Except for these
+				.Where(i => includedCommonSubdirs.All(
+					j => !string.Equals(
+						i, j, StringComparison.OrdinalIgnoreCase
+					)
+				))
+				.Select(i => $"common/{i}/"),
 			// Along with other hardcoded dirs that will be read by CWTools
 			// https://github.com/cwtools/cwtools/blob/b377453dee803f9258be92cfc49896d09039702d/CWTools/Common/STLConstants.fs#L156-L170
-			.Concat([
-				"events/", "flags/", "fonts/", "gfx/", "interface/",
-				"map/", "music/", "prescripted_countries/", "sound/",
-			])
-			.ToFSharpList();
+			"events/", "flags/", "fonts/", "gfx/", "interface/",
+			"map/", "music/", "prescripted_countries/", "sound/",
+		];
 
 		CWToolsHooks.Init();
 		CWToolsHooks.OnProgress = () => task?.Increment(1);
@@ -118,8 +121,13 @@ internal sealed class GameData {
 				new ValidationSettings(LangHelpers.allSTLLangs, true, false),
 				null,
 				null,
-				ignoreGlobs,
+				// CWTools 2.39.0 起 excludeGlobPatterns 由 FSharpList<string>
+				// 改为 FSharpOption<string[]>，需要显式包成 Some
+				FSharpOption<string[]>.Some(ignoreGlobs),
 				null,
+				null,
+				// 2.39.0 新增的两个参数：调试设置与模组过滤
+				DebugSettings.Default,
 				null
 			)
 		);
@@ -216,10 +224,13 @@ internal sealed class GameData {
 
 	private void LoadLocalization(ProgressContext? ctx) {
 		ConcurrentDictionary<CWLang, ReadOnlyDictionary<string, string>> L10n = new();
+		// CWTools 2.39.0 起 LocalisationEntries() 返回 IEnumerable 而非数组，
+		// 没有 Length；先物化成数组，长度与遍历用同一份数据。
+		var entries = Game.LocalisationManager.LocalisationEntries().ToArray();
 		ProgressTask? task = ProgressExt.Task(ctx, Messages.Progress.LoadingL10n)?
-			.MaxValue(Game.LocalisationManager.LocalisationEntries().Length);
+			.MaxValue(entries.Length);
 
-		Parallel.ForEach(Game.LocalisationManager.LocalisationEntries(), (x) => {
+		Parallel.ForEach(entries, (x) => {
 			L10n[x.Item1] = x.Item2
 				.ToSortedList(
 					(x, y) => Comparer.Compare(x.Item2, y.Item2)

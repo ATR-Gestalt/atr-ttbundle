@@ -2,27 +2,6 @@
   "version": 1,
   "dependencies": {
     "net10.0": {
-      "CWTools": {
-        "type": "Direct",
-        "requested": "[0.5.0-alpha, )",
-        "resolved": "0.5.0-alpha",
-        "contentHash": "9HwPxfQdMHdWOyUpsW8HHtwarxjnJhb9iKMS1syqYRbl2jdtWcDDpgTTBHyztbvYHjk4yPr937x0pjSX+7xkgA==",
-        "dependencies": {
-          "DotNet.Glob": "3.1.3",
-          "FParsec": "[1.0.4-RC3]",
-          "FSharp.Collections.ParallelSeq": "1.2.0",
-          "FSharp.Data": "[3.0.1]",
-          "FSharpx.Collections": "[2.0.0]",
-          "Sandwych.QuickGraph.Core": "1.0.0",
-          "VDS.Common": "2.0.0"
-        }
-      },
-      "FSharp.Core": {
-        "type": "Direct",
-        "requested": "[10.1.401, )",
-        "resolved": "10.1.401",
-        "contentHash": "/lvOK51KD8IangBYkfDVna3/HrE/r4VUnX3dI01KDspctoYXmind3POeoYkqWKeXHwiKlf6Hc9TxwSnoSCWcjw=="
-      },
       "Microsoft.EntityFrameworkCore.Design": {
         "type": "Direct",
         "requested": "[10.0.12, )",
@@ -108,41 +87,6 @@
         "requested": "[18.1.0, )",
         "resolved": "18.1.0",
         "contentHash": "5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw=="
-      },
-      "DotNet.Glob": {
-        "type": "Transitive",
-        "resolved": "3.1.3",
-        "contentHash": "hOfHw7MLJw/tbXaFwR1oiDb+dIXDp8URTxp5Pco42OOhiw77wrUNx6v6syNygHZbWwYdXQocL2Mo1l5FnfDVjg=="
-      },
-      "FParsec": {
-        "type": "Transitive",
-        "resolved": "1.0.4-RC3",
-        "contentHash": "+Ov824RdzNYOmTdSLgx/rl57rJ/QhFWh+sCuk7MRGEQdmqc7PFsnf1oansj9fY4RbNIoMCG7sS6mJJPfLVNZhg==",
-        "dependencies": {
-          "FSharp.Core": "4.2.3",
-          "NETStandard.Library": "1.6.1"
-        }
-      },
-      "FSharp.Collections.ParallelSeq": {
-        "type": "Transitive",
-        "resolved": "1.2.0",
-        "contentHash": "NoMSS6RHyAVixqAENqSWVNqQPYAHbU0WVVkr1M5ZoVmD1spM92SN4Fa+9+P7YjoQJJf2GYg9ENukjbmxGpQPag==",
-        "dependencies": {
-          "FSharp.Core": "5.0.0"
-        }
-      },
-      "FSharp.Data": {
-        "type": "Transitive",
-        "resolved": "3.0.1",
-        "contentHash": "Ow+LTtkJGouaZFxe8xh2+sIT549fWQ7QZPXMXz4wltaam/zQAXphYex24O1v4B5AplSAgTlJ5yWCWcvf8yzAdA==",
-        "dependencies": {
-          "FSharp.Core": "4.3.4"
-        }
-      },
-      "FSharpx.Collections": {
-        "type": "Transitive",
-        "resolved": "2.0.0",
-        "contentHash": "/+AgFH66lj/iyMB0z+R2zIoX7pGLs/pqAC9+4P9mo+PxPguxlIoVe536OMNDp9C7tWR1CMUNc3J6+Oly6S2g0w=="
       },
       "Humanizer.Core": {
         "type": "Transitive",
@@ -337,11 +281,6 @@
         "resolved": "10.0.12",
         "contentHash": "dYfCLR52UA+3DL7C4I/pvSaRPkNqxrUAQmbFL2u0zvYKKzqgrFCJl08Df+F1aYc8leu9JvpC9bsURUdpExcBXQ=="
       },
-      "Microsoft.NETCore.Platforms": {
-        "type": "Transitive",
-        "resolved": "1.1.0",
-        "contentHash": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A=="
-      },
       "Microsoft.VisualStudio.SolutionPersistence": {
         "type": "Transitive",
         "resolved": "1.0.52",
@@ -355,23 +294,10 @@
           "System.CodeDom": "6.0.0"
         }
       },
-      "NETStandard.Library": {
-        "type": "Transitive",
-        "resolved": "1.6.1",
-        "contentHash": "WcSp3+vP+yHNgS8EV5J7pZ9IRpeDuARBPN28by8zqff1wJQXm26PVU8L3/fYLBJVU7BtDyqNVWq2KlCVvSSR4A==",
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0"
-        }
-      },
       "Newtonsoft.Json": {
         "type": "Transitive",
         "resolved": "13.0.4",
         "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
-      },
-      "Sandwych.QuickGraph.Core": {
-        "type": "Transitive",
-        "resolved": "1.0.0",
-        "contentHash": "OJEAm5kik+51yBaDfDuSD9+bx3dI23IvcfFcSL+H6v/YfAYtHbiMkAn5aOljNlkHSig3uakMRGhCTYr3lDKrEA=="
       },
       "Spectre.Console.Ansi": {
         "type": "Transitive",
@@ -443,11 +369,6 @@
           "System.Composition.Hosting": "9.0.0",
           "System.Composition.Runtime": "9.0.0"
         }
-      },
-      "VDS.Common": {
-        "type": "Transitive",
-        "resolved": "2.0.0",
-        "contentHash": "ogBkGWAZl4We1zBivoHcE41BM0ovlJ8OKwUhBDi+4aKoxWeUTtihdt9RZh4N2Y532e364vt4YgWiyq9Ne4KCZA=="
       }
     },
     "net10.0/linux-x64": {

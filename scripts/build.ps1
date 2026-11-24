@@ -4,12 +4,12 @@
 #   .\scripts\build.ps1                      # 同时构建 Windows 与 Linux
 #   .\scripts\build.ps1 -Rid win-x64         # 只构建指定平台
 #   .\scripts\build.ps1 -KeepPdb             # 保留调试符号（默认不留）
-#   .\scripts\build.ps1 -CwToolsDir <路径>    # 指定 CWTools 目录（默认取 VS Code 扩展自带的）
+#   .\scripts\build.ps1 -CwToolsDir <路径>    # 指定 CWTools 目录（默认用 vendor/，见下）
 #
 # 前置条件：CWTools 2.39.0 不在 NuGet 上（最高只有 0.6.0-alpha，实测不认 Stellaris 4.x
-# 的 `key? =` 可选赋值，会整文件丢读巨构与 Force of Will 科技），因此改为引用
-# VS Code 扩展 foreverskywalker.foreverskywalker-stellaris-cwtools 自带的私有构建。
-# 构建机需安装该扩展（版本 2.39.0），或用 -CwToolsDir 指向一份拷贝。
+# 的 `key? =` 可选赋值，会整文件丢读巨构与 Force of Will 科技）。
+# 程序集已随仓库放在 vendor/cwtools-2.39.0/，无需额外准备；
+# 只有该目录缺失时才回退到本机 VS Code 扩展目录。
 #
 # 产出：dist/<rid>/ 下一个可直接分发的目录：
 #   atr-ttbundle(.exe) + 一键启动.bat / start.sh + README.md + 配置示例
@@ -38,18 +38,23 @@ if (-not (Test-Path $dotnet)) {
 Write-Host "SDK     : $dotnet"
 Write-Host "项目    : $project"
 
-# CWTools 前置检查：缺了会在编译期报「找不到 CWTools.dll」，提前给出可读提示
+# CWTools 前置检查：优先用仓库自带的 vendor 目录，缺失时回退到本机扩展
 if ([string]::IsNullOrWhiteSpace($CwToolsDir)) {
-    $CwToolsDir = Join-Path $env:USERPROFILE '.vscode/extensions/foreverskywalker.foreverskywalker-stellaris-cwtools-2.39.0/bin/server/win-x64'
+    $vendored = Join-Path $root 'vendor/cwtools-2.39.0'
+    if (Test-Path (Join-Path $vendored 'CWTools.dll')) {
+        $CwToolsDir = $vendored
+    } else {
+        $CwToolsDir = Join-Path $env:USERPROFILE '.vscode/extensions/foreverskywalker.foreverskywalker-stellaris-cwtools-2.39.0/bin/server/win-x64'
+    }
 }
 
 if (-not (Test-Path (Join-Path $CwToolsDir 'CWTools.dll'))) {
     throw @"
 找不到 CWTools.dll：$CwToolsDir
 
-CWTools 需取自 VS Code 扩展 foreverskywalker.foreverskywalker-stellaris-cwtools（2.39.0）：
-  1. 在 VS Code 里安装该扩展；或
-  2. 用 -CwToolsDir 指向一份手动拷贝的目录
+正常情况下应使用仓库自带的 vendor/cwtools-2.39.0 目录。
+若该目录缺失，可从 VS Code 扩展 foreverskywalker.foreverskywalker-stellaris-cwtools
+（2.39.0）的 bin/server/win-x64/ 重新拷贝，或用 -CwToolsDir 指向一份手动拷贝。
 "@
 }
 
@@ -77,6 +82,11 @@ foreach ($runtime in $Rid) {
     Copy-Item (Join-Path $root 'LICENSE') $outDir -Force
     Copy-Item (Join-Path $root 'THIRD-PARTY-NOTICES.md') $outDir -Force
     Copy-Item (Join-Path $root 'config/atr-ttbundle.example.toml') $outDir -Force
+    # CWTools 的 MIT 声明，随二进制一起分发（vendor 目录里那份）
+    $cwtoolsLicense = Join-Path $CwToolsDir 'LICENSE.cwtools.txt'
+    if (Test-Path $cwtoolsLicense) {
+        Copy-Item $cwtoolsLicense $outDir -Force
+    }
 
     # 启动器就地生成，不再维护模板文件
     if ($runtime -like 'win-*') {

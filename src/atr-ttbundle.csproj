@@ -62,16 +62,26 @@
 	</PropertyGroup>
 
 	<!--
-		CWTools 2.39.0：改为引用 VS Code 扩展自带的私有构建。
-		原因：NuGet 上最高只有 0.6.0-alpha，实测与 0.5.0-alpha 一样不认 Stellaris 4.x
-		的 `key? =` 可选赋值语法，会整文件丢读 00_megastructures.txt 与
-		00_forceofwill_tech.txt（巨构与 Force of Will 科技全缺）。
-		2.39.0 实测可正确解析这两个文件。
-		代价：不能走 NuGet 还原，构建机必须装该扩展；分发时需把 dll 一并打包。
+		CWTools 2.39.0：取自 vendor/cwtools-2.39.0（随仓库一起提供），
+		找不到时回退到本机 VS Code 扩展目录。
+		为什么不用 NuGet：NuGet 上最高只有 0.6.0-alpha，实测与 0.5.0-alpha 一样不认
+		Stellaris 4.x 的 `key? =` 可选赋值语法，会整文件丢读 00_megastructures.txt 与
+		00_forceofwill_tech.txt（12 个巨构科技 + 4 个 Force of Will 科技全缺）。
+		2.39.0 实测可正确解析这两个文件，但它只在扩展里私有打包，未发布到 NuGet。
+		许可：CWTools 及其配套程序集均为 MIT，声明见 vendor/cwtools-2.39.0/LICENSE.cwtools.txt。
 	-->
 	<PropertyGroup>
-		<CwToolsDir Condition="'$(CwToolsDir)' == ''">$([System.IO.Path]::Combine($(USERPROFILE), '.vscode', 'extensions', 'foreverskywalker.foreverskywalker-stellaris-cwtools-2.39.0', 'bin', 'server', 'win-x64'))</CwToolsDir>
+		<VendoredCwToolsDir>$([System.IO.Path]::Combine($(MSBuildProjectDirectory), '..', 'vendor', 'cwtools-2.39.0'))</VendoredCwToolsDir>
+		<ExtensionCwToolsDir>$([System.IO.Path]::Combine($(USERPROFILE), '.vscode', 'extensions', 'foreverskywalker.foreverskywalker-stellaris-cwtools-2.39.0', 'bin', 'server', 'win-x64'))</ExtensionCwToolsDir>
+		<!-- 优先级：显式传入的 CwToolsDir > vendor 目录 > 本机扩展目录 -->
+		<CwToolsDir Condition="'$(CwToolsDir)' == '' and Exists('$(VendoredCwToolsDir)\CWTools.dll')">$(VendoredCwToolsDir)</CwToolsDir>
+		<CwToolsDir Condition="'$(CwToolsDir)' == ''">$(ExtensionCwToolsDir)</CwToolsDir>
 	</PropertyGroup>
+
+	<!-- vendor 目录自带许可声明，分发时随二进制一起带 -->
+	<ItemGroup Condition="'$(CwToolsDir)' == '$(VendoredCwToolsDir)'">
+		<None Include="$(VendoredCwToolsDir)\LICENSE.cwtools.txt" Link="LICENSE.cwtools.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="CWTools">

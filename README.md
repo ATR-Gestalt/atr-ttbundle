@@ -109,6 +109,15 @@
 
 需要 .NET SDK 10。本仓库自带一份在 `toolchain/dotnet/`（免安装、不污染系统）。
 
+**还需要一份 CWTools 2.39.0**：它不在 NuGet 上（NuGet 最高只有 0.6.0-alpha，实测不认
+Stellaris 4.x 的 `key? =` 可选赋值，会整文件丢读巨构与 Force of Will 科技），
+因此改为引用 VS Code 扩展 `foreverskywalker.foreverskywalker-stellaris-cwtools` 自带的私有构建。
+装好该扩展即可，构建脚本默认从扩展目录取；也可以用 `-CwToolsDir` 指向一份手动拷贝：
+
+```powershell
+./scripts/build.ps1 -CwToolsDir "D:\somewhere\cwtools-2.39.0"
+```
+
 一句话构建双平台并打包 `dist/`：
 
 ```powershell
@@ -127,6 +136,7 @@
 ```
 
 > SDK 由 `scripts/dotnet-install.ps1` 安装到 `toolchain/dotnet`；换机器要重装时跑该脚本。
+> CWTools 目录默认值在 `src/atr-ttbundle.csproj` 的 `CwToolsDir` 属性里，换扩展版本号时改那一处。
 
 ## 仓库结构
 

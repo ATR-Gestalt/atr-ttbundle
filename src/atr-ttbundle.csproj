@@ -39,16 +39,20 @@
 	<!-- Publish -->
 	<PropertyGroup>
 		<!--
-			ATRTree 的目标是「玩家拿到 exe 双击就能跑，不用装 .NET 运行时」，
-			所以这里改成 self-contained；单文件在 Release 发布时产出。
-			注意：上游用 HarmonyX 挂 CWTools 进度回调，而 MonoMod 在
-			self-contained 单文件下找不到 clrjit 会崩，因此本项目已把
-			CWToolsHooks 改成空实现，不再依赖 HarmonyX。
+			ATRTree 的目标是「玩家拿到就能双击就跑，不用装 .NET 运行时」，
+			所以保持 self-contained（自带运行时）。
+
+			但不再打成单文件：单文件模式下运行时要把内嵌的原生库解压到
+			%TEMP%\.net\<应用名>\<哈希>\，实测在部分 Windows 环境下解压会被拒
+			（Error code: 5，Access Denied），程序连启动都过不了，
+			用户看到的就是「双击没反应」。改成分目录输出后不再依赖运行时解压，
+			代价是分发目录里多出若干 dll（仍是一个文件夹，双击里面的 exe 即可）。
 		-->
-		<PublishSingleFile>true</PublishSingleFile>
+		<PublishSingleFile>false</PublishSingleFile>
 		<SelfContained>true</SelfContained>
-		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+		<!-- 单文件关闭后，原生库与托管库都随目录平铺输出，无需自解压 -->
+		<IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
+		<EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="$(Configuration) == 'Release'">

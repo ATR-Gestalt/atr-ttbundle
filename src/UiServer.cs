@@ -11,6 +11,10 @@ namespace StlTechRelGen;
 ///
 /// 选择 Web 而不是原生窗口，是为了 Windows 与 Linux 共用一套界面，
 /// 也不给「免安装单文件」增加 GUI 框架依赖。
+///
+/// HTTP 层用自实现的 <see cref="MiniHttpServer"/> 而不是 <see cref="HttpListener"/>，
+/// 原因见该类注释（Windows 需 URL ACL/管理员权限；且 .NET 10 的
+/// <c>HttpListener.Start()</c> 在部分环境会抛「句柄无效」，导致界面打不开）。
 /// </summary>
 internal static class UiServer {
 	private static readonly JsonSerializerOptions JsonOpts = new() {
@@ -41,22 +45,17 @@ internal static class UiServer {
 			config = loaded;
 		}
 
-		HttpListener listener = new();
-		int actualPort = port > 0 ? port : FreePort();
-		string prefix = $"http://127.0.0.1:{actualPort}/";
-		listener.Prefixes.Add(prefix);
-		listener.Start();
+		// 端口 0 表示由系统分配空闲端口
+		MiniHttpServer server = new(port, Handle);
+		server.Start();
+
+		string prefix = $"http://127.0.0.1:{server.Port}/";
 
 		_ = Task.Run(async () => {
-			while (listener.IsListening) {
-				HttpListenerContext ctx;
-				try {
-					ctx = await listener.GetContextAsync();
-				} catch {
-					break;
-				}
-
-				_ = Task.Run(() => Handle(ctx));
+			while (true) {
+				// MiniHttpServer 内部已自行处理连接循环，
+				// 这里保持一个常驻任务，让调用方不必关心生命周期
+				await Task.Delay(TimeSpan.FromMinutes(10));
 			}
 		});
 
@@ -79,43 +78,43 @@ internal static class UiServer {
 		return port;
 	}
 
-	private static void Handle(HttpListenerContext ctx) {
+	private static void Handle(MiniHttpServer.Request req, MiniHttpServer.Response res) {
 		try {
-			string path = ctx.Request.Url?.AbsolutePath ?? "/";
-			string method = ctx.Request.HttpMethod;
+			string path = req.Path;
+			string method = req.Method;
 
 			if (method == "GET" && (path == "/" || path == "/index.html")) {
-				WriteText(ctx, LoadHtml(), "text/html; charset=utf-8");
+				WriteText(res, LoadHtml(), "text/html; charset=utf-8");
 			} else if (method == "GET" && path == "/api/config") {
-				WriteJson(ctx, ConfigDto());
+				WriteJson(res, ConfigDto());
 			} else if (method == "POST" && path == "/api/config") {
-				ApplyConfig(ReadBody(ctx));
-				WriteJson(ctx, new { message = "配置已保存" });
+				ApplyConfig(req.Body);
+				WriteJson(res, new { message = "配置已保存" });
 			} else if (method == "GET" && path == "/api/playsets") {
 				// doc 参数来自界面当前输入，避免「刚填的路径不生效」
-				string? doc = ctx.Request.QueryString["doc"];
-				WriteJson(ctx, Safe(() => Generator.ListPlaysets(config, doc)) ?? []);
+				string? doc = req.QueryOrNull("doc");
+				WriteJson(res, Safe(() => Generator.ListPlaysets(config, doc)) ?? []);
 			} else if (method == "GET" && path == "/api/mods") {
-				string playset = ctx.Request.QueryString["playset"] ?? "";
-				string? doc = ctx.Request.QueryString["doc"];
-				WriteJson(ctx, Safe(() => Generator.ListModsInPlayset(config, playset, doc)) ?? []);
+				string playset = req.QueryOrEmpty("playset");
+				string? doc = req.QueryOrNull("doc");
+				WriteJson(res, Safe(() => Generator.ListModsInPlayset(config, playset, doc)) ?? []);
 			} else if (method == "GET" && path == "/api/browse") {
-				WriteJson(ctx, Browse(ctx.Request.QueryString["path"]));
+				WriteJson(res, Browse(req.QueryOrNull("path")));
 			} else if (method == "GET" && path == "/api/suggest") {
-				WriteJson(ctx, Suggest());
+				WriteJson(res, Suggest());
 			} else if (method == "POST" && path == "/api/generate") {
 				StartGenerate();
-				WriteJson(ctx, new { message = "已开始" });
+				WriteJson(res, new { message = "已开始" });
 			} else if (method == "GET" && path == "/api/status") {
-				WriteJson(ctx, StatusDto());
+				WriteJson(res, StatusDto());
 			} else {
-				ctx.Response.StatusCode = 404;
-				WriteText(ctx, "not found", "text/plain; charset=utf-8");
+				res.Status = 404;
+				WriteText(res, "not found", "text/plain; charset=utf-8");
 			}
 		} catch (Exception e) {
 			try {
-				ctx.Response.StatusCode = 500;
-				WriteText(ctx, e.ToString(), "text/plain; charset=utf-8");
+				res.Status = 500;
+				WriteText(res, e.ToString(), "text/plain; charset=utf-8");
 			} catch {
 				// ignore
 			}
@@ -236,21 +235,11 @@ internal static class UiServer {
 		return r.ReadToEnd();
 	}
 
-	private static string ReadBody(HttpListenerContext ctx) {
-		using StreamReader r = new(ctx.Request.InputStream, Encoding.UTF8);
-		return r.ReadToEnd();
-	}
+	private static void WriteJson(MiniHttpServer.Response res, object data) =>
+		WriteText(res, JsonSerializer.Serialize(data, JsonOpts), "application/json; charset=utf-8");
 
-	private static void WriteJson(HttpListenerContext ctx, object data) =>
-		WriteText(ctx, JsonSerializer.Serialize(data, JsonOpts), "application/json; charset=utf-8");
-
-	private static void WriteText(HttpListenerContext ctx, string text, string contentType) {
-		byte[] buf = Encoding.UTF8.GetBytes(text);
-		ctx.Response.ContentType = contentType;
-		ctx.Response.ContentLength64 = buf.Length;
-		ctx.Response.OutputStream.Write(buf, 0, buf.Length);
-		ctx.Response.OutputStream.Close();
-	}
+	private static void WriteText(MiniHttpServer.Response res, string text, string contentType) =>
+		res.WriteText(text, contentType);
 
 	private static object ConfigDto() => new {
 		gamePath = config.Game.GamePath,

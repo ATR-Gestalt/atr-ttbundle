@@ -15,15 +15,31 @@ internal sealed class Lang {
 		}
 	);
 
-	internal static void LoadMessages(string? lang) =>
-		Messages = TomlSerializer.Deserialize(
-			Assembly.GetExecutingAssembly()
-				.GetManifestResourceStream(
-					$"{nameof(StlTechRelGen)}"
-					+ $".Resources.lang.{lang}.toml"
-				)!,
-			TomlContext.Default.Lang
-		)!;
+	/// <summary>
+	/// 加载指定语言的提示文案。lang 为空、或对应资源不存在时回退到默认语言，
+	/// 而不是让 <c>GetManifestResourceStream</c> 返回 null 后在反序列化处崩溃。
+	/// </summary>
+	internal static void LoadMessages(string? lang) {
+		string name = string.IsNullOrWhiteSpace(lang) ? DEFAULT_LANG : lang;
+		Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(
+			$"{nameof(StlTechRelGen)}.Resources.lang.{name}.toml"
+		);
+
+		if (stream is null) {
+			// 请求的语言没有对应资源文件时退回默认语言，保证 Messages 一定被初始化
+			stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(
+				$"{nameof(StlTechRelGen)}.Resources.lang.{DEFAULT_LANG}.toml"
+			) ?? throw new InvalidOperationException(
+				$"缺少默认语言资源：{nameof(StlTechRelGen)}.Resources.lang.{DEFAULT_LANG}.toml"
+			);
+		}
+
+		using (stream) {
+			Messages = TomlSerializer.Deserialize(
+				stream, TomlContext.Default.Lang
+			)!;
+		}
+	}
 
 	public required PromptMessages Prompt { get; init; }
 	public required ProgressMessages Progress { get; init; }

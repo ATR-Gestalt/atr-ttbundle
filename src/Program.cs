@@ -72,7 +72,10 @@ public static class Program {
 	private static async Task Execute(Config config) {
 		config.Validate();
 
-		if (config.OverrideLanguage != null) {
+		// 注意：配置模板里 override_language 默认是空字符串而不是缺失，
+		// 用 != null 判断会把 "" 也当成「指定了语言」，进而去加载
+		// Resources.lang..toml 这种不存在的资源并崩溃。
+		if (!string.IsNullOrWhiteSpace(config.OverrideLanguage)) {
 			LoadMessages(config.OverrideLanguage);
 		}
 

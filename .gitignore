@@ -3,6 +3,10 @@ dist/
 toolchain/
 output/
 
+# CWTools 扩展在错误目录跑 /init 时生成的本地索引与指令模板
+.cwtools/
+CWTOOLS.md
+
 /.history/
 /config.toml
 

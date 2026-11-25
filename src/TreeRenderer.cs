@@ -242,10 +242,17 @@ internal static class TreeRenderer {
 		_ => string.Empty,
 	};
 
+	/// <summary>
+	/// 按领域给节点取颜色码。三档都必须是 interface/fonts.gfx 里 textcolors
+	/// 定义过的字母，否则引擎会忽略该码、并连带让后面的 §! 恢复不到上一个颜色。
+	///
+	/// H = { 251 170 41 }，原版注释「Highlight, Orange in Game」，与 £engineering£ 图标同色系。
+	/// 注意不要把工程写成 §O —— 那不是有效颜色码（textcolors 表里没有 O，
+	/// 原版全量脚本也从未用过），会导致工程节点显示成青/白/灰不定色。
+	/// </summary>
 	private static string AreaColor(Tech tech) => tech.Area switch {
-		TechArea.Physics => "§B",
-		TechArea.Society => "§G",
-		TechArea.Engineering => "§O",
-		_ => "§Y",
+		TechArea.Physics => "§B",      // B = { 51 167 255 } 蓝
+		TechArea.Society => "§G",      // G = { 41 225 38 }  绿
+		TechArea.Engineering => "§H",  // H = { 251 170 41 } 橙
 	};
 }

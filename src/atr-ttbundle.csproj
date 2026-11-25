@@ -5,7 +5,7 @@
 			This is used by update checker, and therefore must be
 			the same as git tag name but with no "v" prefix
 		-->
-		<Version>0.1.0</Version>
+		<Version>0.2.0</Version>
 		<RootNamespace>StlTechRelGen</RootNamespace>
 		<!-- 产物名：文件名全小写（跨平台安全），展示名用 ATR-TTbundle -->
 		<AssemblyName>atr-ttbundle</AssemblyName>

@@ -7,11 +7,20 @@
 - 免安装，**玩家不需要装 .NET 运行时**（自带运行时，随包分发）
 - 带图形界面（浏览器操作），也支持命令行
 
-> **关于分发形态**：发布包是一个**文件夹**而不是单个 exe。
-> 早期版本打成单文件，但单文件模式下运行时要把内嵌的原生库解压到
+> **关于分发形态**：发布包是一个压缩包，解压后得到一个**文件夹**，结构如下：
+>
+> ```
+> atr-ttbundle-win-x64/
+> ├── 一键启动.bat          ← 只双击这个
+> ├── README.md / LICENSE 等文档
+> └── app/                   ← 程序本体（230 多个文件，不用管）
+>     └── atr-ttbundle.exe
+> ```
+>
+> 早期版本曾打成单个 exe，但单文件模式下运行时要把内嵌的原生库解压到
 > `%TEMP%\.net\<应用名>\`，实测在部分 Windows 环境会被拒（Access Denied），
-> 表现为「双击没反应」。改成分目录输出后不再依赖运行时解压。
-> 解压压缩包后**整个文件夹一起用**，双击里面的 `一键启动.bat` 即可，别把 exe 单独拷走。
+> 表现为「双击没反应」。改成分目录输出后不再依赖运行时解压 ——
+> 代价是程序本体多，所以用 `app/` 子目录收起，外层只留一个可双击的启动器。
 
 ## 下载
 
@@ -19,8 +28,10 @@
 
 | 平台 | 下载 | 使用 |
 |---|---|---|
-| Windows x64 | `atr-ttbundle-win-x64.zip` | 解压后双击 `一键启动.bat` |
-| Linux x64 | `atr-ttbundle-linux-x64.zip` | 解压后运行 `./start.sh` |
+| Windows x64 | `atr-ttbundle-win-x64.zip` | 解压后双击外层的 `一键启动.bat` |
+| Linux x64 | `atr-ttbundle-linux-x64.zip` | 解压后运行外层的 `./start.sh` |
+
+解压得到的目录名就是压缩包名（如 `atr-ttbundle-win-x64/`），整个目录一起用。
 
 附件 `SHA256SUMS.txt` 是各下载文件的**完整性校验值**（SHA-256）：下载后可用
 `sha256sum -c SHA256SUMS.txt`（Linux/macOS）或 `Get-FileHash`（Windows）
@@ -135,7 +146,7 @@
 手工 publish 也可以：
 
 ```bash
-./toolchain/dotnet/dotnet publish src/atr-ttbundle.csproj -c Release -r win-x64 -o dist/win-x64
+./toolchain/dotnet/dotnet publish src/atr-ttbundle.csproj -c Release -r win-x64 -o dist/atr-ttbundle-win-x64/app
 ```
 
 > SDK 由 `scripts/dotnet-install.ps1` 安装到 `toolchain/dotnet`；换机器要重装时跑该脚本。
@@ -156,7 +167,7 @@ atr-ttbundle/
 │   └── dotnet-install.ps1    重新安装自带 SDK 用
 ├── vendor/cwtools-2.39.0/    CWTools 程序集（vendoring，随仓库提供，含 MIT 声明）
 ├── toolchain/dotnet/         自带 .NET SDK 10（仅编译期用）
-├── dist/                     构建产物（每个平台一个可直接分发的目录）
+├── dist/                     构建产物（每个平台一个分发目录 + 一个同名 zip）
 └── output/target-mod/        本地试跑用的目标模组（生成结果落这里）
 ```
 

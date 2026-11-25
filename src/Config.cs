@@ -6,13 +6,6 @@ using Tomlyn.Serialization;
 namespace StlTechRelGen;
 
 internal sealed partial class Config {
-	// 已不再执行更新检查（原先指向上游仓库，对本工具无意义）。
-	// 保留该类型仅为兼容旧版 atr-ttbundle.toml 里的 [update] 段。
-	public sealed class UpdateConfig {
-		/// <summary>兼容旧版 toml 的 check_update 键；工具已不执行更新检查，默认关闭。</summary>
-		public bool CheckUpdate { get; set; }
-	}
-
 	public sealed class GameConfig {
 		public required string GamePath { get; set; }
 
@@ -136,7 +129,6 @@ internal sealed partial class Config {
 	[TomlPropertyName("suppresses_cwtools_errors")]
 	public bool SuppressesCWToolsErrors { get; set; } = true;
 
-	public UpdateConfig Update { get; set; } = new();
 	public required GameConfig Game { get; set; }
 	public PlaysetConfig? Playset { get; set; }
 

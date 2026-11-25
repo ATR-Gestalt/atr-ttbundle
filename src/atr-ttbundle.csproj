@@ -42,11 +42,13 @@
 			ATRTree 的目标是「玩家拿到就能双击就跑，不用装 .NET 运行时」，
 			所以保持 self-contained（自带运行时）。
 
-			但不再打成单文件：单文件模式下运行时要把内嵌的原生库解压到
+			不分单文件：单文件模式下运行时要把内嵌的原生库解压到
 			%TEMP%\.net\<应用名>\<哈希>\，实测在部分 Windows 环境下解压会被拒
 			（Error code: 5，Access Denied），程序连启动都过不了，
-			用户看到的就是「双击没反应」。改成分目录输出后不再依赖运行时解压，
-			代价是分发目录里多出若干 dll（仍是一个文件夹，双击里面的 exe 即可）。
+			用户看到的就是「双击没反应」。分目录输出后不依赖运行时解压。
+
+			打包结构由 scripts/build.ps1 整理：程序本体（200+ 文件）收进
+			app/ 子目录，外层只留启动器与文档，并将整个目录压成同名 zip。
 		-->
 		<PublishSingleFile>false</PublishSingleFile>
 		<SelfContained>true</SelfContained>
@@ -152,7 +154,6 @@
 			<HintPath>$(CwToolsDir)\ZString.dll</HintPath>
 			<Private>true</Private>
 		</Reference>
-		<!-- HarmonyX 已移除：CWToolsHooks 改为空实现，self-contained 单文件不需要它 -->
 
 		<PackageReference Include="Tomlyn" Version="2.10.1" />
 		<PackageReference Include="YamlDotNet" Version="18.1.0" />

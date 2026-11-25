@@ -111,9 +111,6 @@ internal sealed class GameData {
 			"map/", "music/", "prescripted_countries/", "sound/",
 		];
 
-		CWToolsHooks.Init();
-		CWToolsHooks.OnProgress = () => task?.Increment(1);
-
 		CWTools.Games.Stellaris.STLGame stellaris = new(
 			new GameSetupSettings<STLLookup>(
 				sourceDirs,

@@ -11,8 +11,12 @@
 # 程序集已随仓库放在 vendor/cwtools-2.39.0/，无需额外准备；
 # 只有该目录缺失时才回退到本机 VS Code 扩展目录。
 #
-# 产出：dist/<rid>/ 下一个可直接分发的目录：
-#   atr-ttbundle(.exe) + 一键启动.bat / start.sh + README.md + 配置示例
+# 产出：
+#   dist/<rid>/            可直接分发的目录，结构为「启动器在外层、程序本体在 app/」
+#   dist/atr-ttbundle-<rid>.zip   上面目录的压缩包（解压后得到一个同名文件夹）
+#
+# 为什么程序本体放子文件夹：自包含发布会产生 200+ 个 dll，
+# 全铺在外层会让玩家找不到该双击哪个文件。
 
 param(
     [string[]]$Rid = @('win-x64', 'linux-x64'),
@@ -64,20 +68,24 @@ Write-Host ""
 $publishArgs = @($project, '-c', 'Release')
 
 foreach ($runtime in $Rid) {
-    $outDir = Join-Path $root "dist/$runtime"
+    # 目录名 = 压缩包名，这样解压后直接得到一个同名文件夹，
+    # 不会出现「解压出一堆文件散落一地」或「解压出 win-x64 这种看不懂的名字」
+    $outDir = Join-Path $root "dist/atr-ttbundle-$runtime"
+    $appDir = Join-Path $outDir 'app'
     Write-Host ""
-    Write-Host "=== 构建 $runtime → dist/$runtime ===" -ForegroundColor Cyan
+    Write-Host "=== 构建 $runtime → dist/atr-ttbundle-$runtime ===" -ForegroundColor Cyan
 
     if (Test-Path $outDir) {
         Remove-Item -Recurse -Force $outDir
     }
 
-    & $dotnet publish $project -c Release -r $runtime -o $outDir "-p:CwToolsDir=$CwToolsDir"
+    # 程序本体（含 200+ 个依赖 dll）先发布到 app/，再往下整理
+    & $dotnet publish $project -c Release -r $runtime -o $appDir "-p:CwToolsDir=$CwToolsDir"
     if ($LASTEXITCODE -ne 0) {
         throw "构建失败：$runtime（退出码 $LASTEXITCODE）"
     }
 
-    # 分发目录里的公共文件
+    # 外层：给人看的文档与配置示例
     Copy-Item (Join-Path $root 'README.md') $outDir -Force
     Copy-Item (Join-Path $root 'LICENSE') $outDir -Force
     Copy-Item (Join-Path $root 'THIRD-PARTY-NOTICES.md') $outDir -Force
@@ -85,16 +93,19 @@ foreach ($runtime in $Rid) {
     # CWTools 的 MIT 声明，随二进制一起分发（vendor 目录里那份）
     $cwtoolsLicense = Join-Path $CwToolsDir 'LICENSE.cwtools.txt'
     if (Test-Path $cwtoolsLicense) {
-        Copy-Item $cwtoolsLicense $outDir -Force
+        Copy-Item $cwtoolsLicense $appDir -Force
     }
 
-    # 启动器就地生成，不再维护模板文件
+    # 启动器放外层：玩家只需看到这一个可双击的文件
     if ($runtime -like 'win-*') {
+        # 注意：bat 按 ASCII 写出（cmd 默认代码页是 936/GBK，写 UTF-8 中文会乱码），
+        # 因此注释一律用英文，避免出现问号方块
         $bat = @'
 @echo off
 rem ATR-TTbundle launcher
+rem Program files live in app\; config file is app\atr-ttbundle.toml
 cd /d "%~dp0"
-start "" "atr-ttbundle.exe" --ui
+start "" "app\atr-ttbundle.exe" --ui
 exit
 '@
         # bat 必须是 CRLF
@@ -107,9 +118,10 @@ exit
         $sh = @'
 #!/bin/sh
 # ATR-TTbundle launcher
+# 程序本体在 app/ 下；配置写在 app/atr-ttbundle.toml
 cd "$(dirname "$0")" || exit 1
-chmod +x ./atr-ttbundle 2>/dev/null
-./atr-ttbundle --ui
+chmod +x ./app/atr-ttbundle 2>/dev/null
+./app/atr-ttbundle --ui
 '@
         # sh 必须是 LF
         $sh = ($sh -replace "`r`n", "`n")
@@ -120,12 +132,22 @@ chmod +x ./atr-ttbundle 2>/dev/null
     }
 
     if (-not $KeepPdb) {
-        Get-ChildItem $outDir -Filter '*.pdb' -ErrorAction SilentlyContinue |
+        Get-ChildItem $appDir -Filter '*.pdb' -ErrorAction SilentlyContinue |
             Remove-Item -Force
     }
 
+    # 打成 zip：压缩包内带顶层文件夹（dist/atr-ttbundle-<rid>/），
+    # 解压后得到一个干净的同名目录，不会散落一地
+    $zipPath = Join-Path $root "dist/atr-ttbundle-$runtime.zip"
+    if (Test-Path $zipPath) {
+        Remove-Item $zipPath -Force
+    }
+    Compress-Archive -Path $outDir -DestinationPath $zipPath -CompressionLevel Optimal
+
     $size = [math]::Round(((Get-ChildItem $outDir -Recurse -File | Measure-Object Length -Sum).Sum / 1MB), 1)
-    Write-Host ("完成：{0} 个文件，{1} MB" -f (Get-ChildItem $outDir -File).Count, $size) -ForegroundColor Green
+    $zipSize = [math]::Round(((Get-Item $zipPath).Length / 1MB), 1)
+    Write-Host ("完成：{0} 个文件，{1} MB（压缩包 {2} MB）" -f `
+        (Get-ChildItem $outDir -Recurse -File).Count, $size, $zipSize) -ForegroundColor Green
 }
 
 Write-Host ""

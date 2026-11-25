@@ -30,10 +30,6 @@ internal sealed class CliArgs : Command<CliArgs.Settings> {
 		[Description("Do not generate localization for vanilla techs (MOD techs only)")]
 		public bool ModOnly { get; init; }
 
-		[CommandOption("--no-check-update")]
-		[Description("Don't check for updates")]
-		public bool NoCheckUpdate { get; init; } = false;
-
 		public Config ToConfig() => new() {
 			Yesmen = true,
 			Game = new Config.GameConfig {
@@ -57,9 +53,6 @@ internal sealed class CliArgs : Command<CliArgs.Settings> {
 			Output = new Config.OutputConfig {
 				TargetMod = string.IsNullOrEmpty(Playset) ? "" : TargetMod,
 				TargetDir = string.IsNullOrEmpty(Playset) ? TargetMod : "",
-			},
-			Update = new Config.UpdateConfig {
-				CheckUpdate = false,
 			},
 		};
 	}

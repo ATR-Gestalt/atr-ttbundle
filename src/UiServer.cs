@@ -34,7 +34,6 @@ internal static class UiServer {
 
 	private static Config NewDefaultConfig() => new() {
 		Game = new() { GamePath = "", DocumentPath = "" },
-		Update = new() { CheckUpdate = false },
 	};
 
 	/// <summary>启动服务，返回可访问的 URL。</summary>
@@ -298,7 +297,6 @@ internal static class UiServer {
 			excludeStartTechs = config.Data.ExcludeStartTechs,
 		},
 		advanced = new {
-			checkUpdate = config.Update.CheckUpdate,
 			overrideLanguage = config.OverrideLanguage ?? "",
 			yesmen = config.Yesmen,
 			suppressesCwtoolsErrors = config.SuppressesCWToolsErrors,
@@ -425,7 +423,6 @@ internal static class UiServer {
 		}
 
 		if (root.TryGetProperty("advanced", out JsonElement advanced)) {
-			config.Update.CheckUpdate = Bool(advanced, "checkUpdate") ?? config.Update.CheckUpdate;
 			config.OverrideLanguage = Str(advanced, "overrideLanguage");
 			config.Yesmen = Bool(advanced, "yesmen") ?? config.Yesmen;
 			config.SuppressesCWToolsErrors =
